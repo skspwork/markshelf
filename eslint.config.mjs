@@ -34,6 +34,8 @@ export default tseslint.config(
     },
   },
   {
+    // Next / react-hooks ルールはアプリ本体 src/** のみに適用する。
+    // root 直下の設定ファイル(eslint.config.mjs / vitest.config.ts)や bin/ は対象外で意図通り。
     files: ["src/**/*.{ts,tsx}"],
     plugins: {
       "@next/next": nextPlugin,
