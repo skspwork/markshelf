@@ -45,3 +45,8 @@ next-env.d.ts
 
 # local test fixtures
 /test-docs
+
+# Claude Code: ローカル設定とエージェント worktree はコミットしない
+# (.claude/ 本体はコミットする)
+.claude/settings.local.json
+.claude/worktrees/

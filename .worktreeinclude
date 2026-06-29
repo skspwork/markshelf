@@ -1,0 +1,12 @@
+# 新しい worktree に引き継ぐ「gitignore 済みだが必要なファイル」を .gitignore 構文で列挙する。
+# implementer は isolation: worktree で専用チェックアウトを持つため、ここに無いものは
+# 新 worktree に存在しない。
+
+# 依存。これが無いと worktree 内で npm run typecheck/lint/test が走らない。
+# コピーが重いと感じる場合はこの行を消し、implementer 側で `npm ci` を実行する運用に切り替える。
+node_modules/
+
+# 環境変数（将来 .env を使う場合に備えて。現状リポジトリには存在しない）
+.env
+.env.local
+.env.*.local

@@ -1,6 +1,6 @@
 # SPEC3.5: Markdown レンダリング
 
-[REQ3.1 プレビューポップアップ](../../../要件定義/REQ3-プレビューとツリー/REQ3.1-プレビューポップアップ.md)、[REQ3.3 目次](../../../要件定義/REQ3-プレビューとツリー/REQ3.3-目次.md)、[REQ3.6 画像プレビュー](../../../要件定義/REQ3-プレビューとツリー/REQ3.6-画像プレビュー.md) の基盤となる Markdown レンダリング仕様。
+[REQ3.1 プレビューポップアップ](../../要件定義/REQ3-プレビューとツリー/REQ3.1-プレビューポップアップ.md)、[REQ3.3 目次](../../要件定義/REQ3-プレビューとツリー/REQ3.3-目次.md)、[REQ3.6 画像プレビュー](../../要件定義/REQ3-プレビューとツリー/REQ3.6-画像プレビュー.md) の基盤となる Markdown レンダリング仕様。
 
 ## 設計
 
@@ -8,7 +8,7 @@
 - GitHub Flavored Markdown（テーブル・タスクリスト・打ち消し線）を有効化
 - 見出しはカスタムコンポーネントに置き換え、`parseHeadings()` で採番した ID を付与（目次のアンカーと一致）
 - コードブロック:
-  - `language-mermaid` は `<MermaidBlock>` に差し替え（[用語集 / Mermaid](../../用語集/)）
+  - `language-mermaid` は `<MermaidBlock>` に差し替え（[Mermaid](../../用語集/Mermaid.md)）
   - その他は Tailwind Typography の `prose-pre` / `prose-code` スタイルで装飾
 - リンク（`<a>`）:
   - 相対パスは `resolveRelativeLink()` で docs パスへ解決し、解決できたら**アプリ内ナビゲーション**扱い（`<span>` + onClick）
