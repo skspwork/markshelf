@@ -1,6 +1,6 @@
 # SPEC1.2: Dockerfile / entrypoint
 
-[REQ1.2 — Docker 起動](../../../要件定義/REQ1-ビューア起動/REQ1.2-Docker起動.md) の実装。
+[REQ1.2 — Docker 起動](../../要件定義/REQ1-ビューア起動/REQ1.2-Docker起動.md) の実装。
 
 ## 設計
 

@@ -1,6 +1,6 @@
 # SPEC1.4: 環境変数
 
-[REQ1.1 npx 起動](../../../要件定義/REQ1-ビューア起動/REQ1.1-npx起動.md)、[REQ1.2 Docker 起動](../../../要件定義/REQ1-ビューア起動/REQ1.2-Docker起動.md)、[REQ1.3 BASE_PATH 配信](../../../要件定義/REQ1-ビューア起動/REQ1.3-BASE_PATH配信.md) が参照する環境変数を定義する。
+[REQ1.1 npx 起動](../../要件定義/REQ1-ビューア起動/REQ1.1-npx起動.md)、[REQ1.2 Docker 起動](../../要件定義/REQ1-ビューア起動/REQ1.2-Docker起動.md)、[REQ1.3 BASE_PATH 配信](../../要件定義/REQ1-ビューア起動/REQ1.3-BASE_PATH配信.md) が参照する環境変数を定義する。
 
 ## 環境変数一覧
 

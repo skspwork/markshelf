@@ -1,6 +1,6 @@
 # SPEC1.3: basePath 実装
 
-[REQ1.3 — BASE_PATH 配信](../../../要件定義/REQ1-ビューア起動/REQ1.3-BASE_PATH配信.md) の実装。
+[REQ1.3 — BASE_PATH 配信](../../要件定義/REQ1-ビューア起動/REQ1.3-BASE_PATH配信.md) の実装。
 
 ## 設計
 
