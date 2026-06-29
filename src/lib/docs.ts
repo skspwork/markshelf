@@ -16,11 +16,11 @@ export interface TreeEntry {
   hasReadme?: boolean;
 }
 
-function stripOrderPrefix(name: string): string {
+export function stripOrderPrefix(name: string): string {
   return name.replace(ORDER_PREFIX, "");
 }
 
-function sortByPrefix(a: string, b: string): number {
+export function sortByPrefix(a: string, b: string): number {
   const aMatch = a.match(ORDER_PREFIX);
   const bMatch = b.match(ORDER_PREFIX);
   if (aMatch && bMatch) return Number(aMatch[1]) - Number(bMatch[1]);
