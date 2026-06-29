@@ -36,6 +36,10 @@
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build && node scripts/pack-static.mjs",
     "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "docker:build": "docker build -t markshelf-base .",
     "docker:run": "node scripts/docker-run.mjs",
     "prepublishOnly": "npm run build"
@@ -53,12 +57,18 @@
     "simple-git": "^3.36.0"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^16.2.4",
     "@tailwindcss/postcss": "^4",
     "@types/cytoscape": "^3.21.9",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^6.1.1",
+    "globals": "^16.5.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "typescript-eslint": "^8.62.0",
+    "vitest": "^3.2.6"
   }
 }
