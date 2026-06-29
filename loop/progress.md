@@ -22,5 +22,5 @@ _最終更新: 2026-06-29 (triage 実行)_
 ## Notes
 <!-- 試したが失敗したアプローチ。同じ轍を踏まないための記憶。 -->
 - ESLint は eslint-config-next + FlatCompat が ESLint 9 で循環参照クラッシュするため不採用。typescript-eslint のネイティブ flat config + @next/eslint-plugin-next + eslint-plugin-react-hooks に切り替えて解決済み。
-- 検証 hook（.claude/settings.json の SubagentStop）は自動実行設定の変更のため、自動承認分類器にブロックされた。ユーザーの明示承認が必要（未適用）。
+- 検証 hook（.claude/settings.json の SubagentStop, matcher:implementer）はユーザー承認のうえ適用済み。implementer 完了時に typecheck/lint/test を決定的に実行する。
 - カスタムサブエージェント（explorer/implementer/reviewer）はセッション開始時ロードのため、定義直後の同一セッションでは名前解決できない。Claude Code 再起動後 or ループの新規セッションで有効。
