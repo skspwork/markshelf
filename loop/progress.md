@@ -11,7 +11,7 @@ _最終更新: 2026-06-29 (triage 3回目)_
 
 ## Done (直近)
 <!-- 完了した案件と PR リンク。`- [x] 概要 (#PR番号)` -->
-- [x] src/lib/docs.ts の純粋関数（flattenTree / sortByPrefix / stripOrderPrefix）に Vitest 単体テスト22件を追加 — ブランチ test/docs-lib-units、reviewer APPROVE、ゲート緑。PR は人間承認待ち
+- [x] src/lib/docs.ts の純粋関数（flattenTree / sortByPrefix / stripOrderPrefix）に Vitest 単体テスト22件を追加 — reviewer APPROVE、ゲート緑、PR #8 作成済み（マージは人間）
 - [x] ループ環境構築（記憶/Skills/サブエージェント/worktree/コネクタ/検証ゲート）— PR #6 として master にマージ済み
 - [x] origin/master の取り込み（next 16.2.4→16.2.6 / package-lock 再生成）— マージコミット c6e9207
 
