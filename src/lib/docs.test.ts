@@ -63,6 +63,13 @@ describe("flattenTree", () => {
   it("空配列を渡すと [] を返す", () => {
     expect(flattenTree([])).toEqual([]);
   });
+
+  it("folder で children が無く hasReadme:true でも README だけ出して落ちない", () => {
+    const entries: TreeEntry[] = [
+      { name: "guide", displayName: "guide", path: "guide", type: "folder", hasReadme: true },
+    ];
+    expect(flattenTree(entries)).toEqual([{ path: "guide/README.md", displayName: "guide" }]);
+  });
 });
 
 // ----------------------------------------------------------------
@@ -94,6 +101,12 @@ describe("sortByPrefix", () => {
     items.sort(sortByPrefix);
     expect(items).toEqual(["1_a", "2-b", "3.c", "4 d"]);
   });
+
+  it("同番号は比較が 0 を返し、安定ソートで元の順序を保つ", () => {
+    const items = ["1_b", "1_a"];
+    items.sort(sortByPrefix);
+    expect(items).toEqual(["1_b", "1_a"]);
+  });
 });
 
 // ----------------------------------------------------------------
@@ -118,5 +131,9 @@ describe("stripOrderPrefix", () => {
 
   it("'123'（区切りなし数字のみ）は不変", () => {
     expect(stripOrderPrefix("123")).toBe("123");
+  });
+
+  it("拡張子は除去しない（責務境界: .md 除去は呼び出し側が別途行う）", () => {
+    expect(stripOrderPrefix("01_intro.md")).toBe("intro.md");
   });
 });
