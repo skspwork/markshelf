@@ -3,6 +3,7 @@ name: implementer
 description: spec に沿って最小の変更で実装し、テストを通す。
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
+isolation: worktree
 skills:
   - project-conventions
 ---
