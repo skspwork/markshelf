@@ -1,0 +1,28 @@
+# Build-context ignore for docker/Dockerfile.demo.
+#
+# BuildKit uses this file INSTEAD of the repo-root .dockerignore when building
+# with `-f docker/Dockerfile.demo`. Compared to the root ignore, docs/ and .git/
+# are intentionally KEPT here — the demo image must bake markshelf's own
+# documentation and git history so the deployed site is a live self-demo.
+
+node_modules
+.next
+out
+dist
+.turbo
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+npm-debug.log*
+
+# Loop / agent bookkeeping — not part of the deployed site
+loop
+.claude
+
+# NOTE: docs/ and .git/ are deliberately NOT ignored (that is the whole point).

@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1.6
+#
+# Demo image for the public Fly.io deployment (see .github/workflows/deploy.yml).
+#
+# Unlike the distributable base image (Dockerfile at the repo root, which ships
+# WITHOUT docs so users mount their own via -v), this image bakes markshelf's
+# OWN repository — docs/ + full git history — and points MARKSHELF_ROOT at
+# /app/docs. The result is a live, self-documenting demo that always reflects
+# THIS commit, so every push can be verified on the web.
+#
+# It is intentionally self-contained (a full `next build`, NOT `FROM
+# markshelf-base`): the deployed site must never lag behind the separate
+# docker-publish workflow.
+#
+# Paired ignore file: docker/Dockerfile.demo.dockerignore. BuildKit uses that
+# instead of the repo-root .dockerignore for this Dockerfile, so docs/ and .git/
+# (which the root ignore strips) are kept in the build context here.
+
+# --- 依存インストール専用ステージ（package.json が変わらない限りキャッシュ再利用） ---
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# --- ランタイム兼ビルドステージ ---
+FROM node:20-alpine
+WORKDIR /app
+
+# git は simple-git（変更履歴・タイムライン）が必要とする
+RUN apk add --no-cache git
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0 \
+    MARKSHELF_ROOT=/app/docs
+
+COPY --from=deps /app/node_modules ./node_modules
+# ここで docs/ と .git/ も含めてリポジトリ全体を /app に取り込む。
+# /app が git リポジトリのルート、docs は /app/docs のサブツリーになるので、
+# ツリー表示は docs/ のみ・getDocsPrefix() が "docs" を解決して履歴パスも整合する。
+COPY . .
+
+# basePath なしのデフォルトビルドをあらかじめ済ませておく（起動を速く保つ）。
+# docker-entrypoint.sh はスタンプ __none__ を見て再ビルドをスキップする。
+RUN npx next build \
+    && mkdir -p .next/standalone/.next \
+    && cp -r .next/static .next/standalone/.next/static \
+    && if [ -d public ]; then cp -r public .next/standalone/public; fi \
+    && printf '__none__' > .next/markshelf-basepath
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+EXPOSE 3000
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
