@@ -1,0 +1,77 @@
+name: Preview deploy (Fly.io)
+
+# Per-PR review apps: every PR gets its own https://markshelf-pr-<n>.fly.dev,
+# so a branch can be reviewed live BEFORE merging to master. The app is created
+# on open, updated on each push, and destroyed when the PR closes.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: read
+  pull-requests: write   # to post/update the preview-URL comment
+
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+env:
+  FLY_APP: markshelf-pr-${{ github.event.number }}
+  FLY_ORG: ${{ vars.FLY_ORG || 'personal' }}
+  # Preview apps are CREATED and DESTROYED, so this needs an ORG-scoped token.
+  # The app-scoped FLY_API_TOKEN used for production deploys will NOT work here.
+  FLY_API_TOKEN: ${{ secrets.FLY_ORG_TOKEN }}
+
+jobs:
+  preview:
+    # Secrets are not exposed to PRs from forks — only run for same-repo branches.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so the baked .git yields a real timeline
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      # ---- build & push (only when the PR is opened / reopened / updated) ----
+      - uses: docker/setup-buildx-action@v3
+        if: github.event.action != 'closed'
+
+      - name: Ensure the review app exists
+        if: github.event.action != 'closed'
+        # Must exist before pushing to its registry.fly.io namespace; ignore "already exists".
+        run: flyctl apps create "$FLY_APP" --org "$FLY_ORG" || true
+
+      - name: Build & push the review image
+        if: github.event.action != 'closed'
+        run: |
+          flyctl auth docker
+          IMAGE="registry.fly.io/$FLY_APP:${GITHUB_SHA}"
+          docker buildx build \
+            -f docker/Dockerfile.demo \
+            -t "$IMAGE" \
+            --push \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            .
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      # Deploys the prebuilt image (open/update) or destroys the app (close),
+      # allocates IPs, and posts the preview URL as a PR comment.
+      - name: Deploy / destroy the review app
+        uses: superfly/fly-pr-review-apps@1.6.0
+        with:
+          name: ${{ env.FLY_APP }}
+          image: ${{ env.IMAGE }}
+          config: fly.preview.toml
+          region: nrt
+          org: ${{ env.FLY_ORG }}
+          memory: 512
+          ha: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Smoke test the preview
+        if: github.event.action != 'closed'
+        run: bash scripts/smoke-test.sh "https://$FLY_APP.fly.dev"

@@ -1,0 +1,33 @@
+# Fly config for ephemeral PR preview apps (see .github/workflows/preview.yml).
+#
+# Intentionally has NO `app` line — the workflow sets the per-PR name
+# (markshelf-pr-<number>) via --app. Same demo image as production, but tuned
+# to be cheap and disposable: suspends when idle, no minimum running machine.
+
+primary_region = "nrt"   # Tokyo
+
+[build]
+  dockerfile = "docker/Dockerfile.demo"
+
+[env]
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Previews are low-traffic and short-lived: let them suspend when idle so an
+  # open PR doesn't keep billing a machine. First hit after idle cold-starts.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
