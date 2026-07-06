@@ -75,3 +75,27 @@ jobs:
       - name: Smoke test the preview
         if: github.event.action != 'closed'
         run: bash scripts/smoke-test.sh "https://$FLY_APP.fly.dev"
+
+      # A single sticky comment (updated in place on each push) with the URL.
+      - name: Comment the preview URL
+        if: github.event.action != 'closed'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: fly-preview
+          message: |
+            🚀 **プレビュー環境をデプロイしました** → https://${{ env.FLY_APP }}.fly.dev
+
+            | | |
+            |---|---|
+            | commit | `${{ github.sha }}` |
+            | ホーム | https://${{ env.FLY_APP }}.fly.dev/ |
+
+            この環境は PR をクローズ/マージすると自動で破棄されます。
+
+      - name: Note teardown on close
+        if: github.event.action == 'closed'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: fly-preview
+          message: |
+            🧹 プレビュー環境 `${{ env.FLY_APP }}` を破棄しました（PR クローズ）。
