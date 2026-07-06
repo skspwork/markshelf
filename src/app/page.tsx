@@ -61,6 +61,15 @@ export default function Home() {
       setBackStack((s) => [...s, selectedPath]);
       setForwardStack([]);
     }
+    // Switching files drops any heading hash — it points at a heading in the
+    // file we're leaving. Shared-link loads bypass navigateTo and keep theirs.
+    if (path !== selectedPath && typeof window !== "undefined" && window.location.hash) {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
+    }
     setSelectedPath(path);
   }, [selectedPath]);
 

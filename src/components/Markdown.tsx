@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Link2, Check } from "lucide-react";
 import type { HeadingInfo } from "./TableOfContents";
 import { MermaidBlock } from "./MermaidBlock";
 import { withBasePath } from "@/lib/basePath";
@@ -20,6 +21,47 @@ interface Props {
   onNavigate?: (path: string) => void;
   onPreviewShow?: (path: string, rect: DOMRect) => void;
   onPreviewHide?: () => void;
+  /** Show a per-heading anchor link that copies a shareable URL (main content only). */
+  enableHeadingLinks?: boolean;
+}
+
+/**
+ * Anchor rendered next to a heading. Clicking it points the URL hash at the
+ * heading and copies the resulting shareable link (?file=...#heading-id) to the
+ * clipboard so it can be sent to someone else and opened scrolled to that spot.
+ */
+function HeadingAnchor({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.hash = id;
+    const full = url.toString();
+    window.history.replaceState(null, "", full);
+    const done = () => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(full).then(done).catch(done);
+    } else {
+      done();
+    }
+  };
+
+  return (
+    <a
+      href={`#${id}`}
+      onClick={handleClick}
+      className="ml-2 inline-flex items-center align-middle text-[var(--text-muted)] no-underline opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-[var(--brand-primary)] transition-opacity"
+      title={copied ? "リンクをコピーしました" : "このヘッダーへのリンクをコピー"}
+      aria-label="このヘッダーへのリンクをコピー"
+    >
+      {copied ? <Check size={13} /> : <Link2 size={13} />}
+    </a>
+  );
 }
 
 function slugify(text: string): string {
@@ -73,6 +115,7 @@ export function Markdown({
   onNavigate,
   onPreviewShow,
   onPreviewHide,
+  enableHeadingLinks = false,
 }: Props) {
   // Parse headings deterministically from the markdown source
   const headings = useMemo(() => parseHeadings(children), [children]);
@@ -210,19 +253,34 @@ export function Markdown({
   }
 
   function makeHeadingComponent(level: number) {
-    return function HeadingWithId(props: React.HTMLAttributes<HTMLHeadingElement>) {
+    return function HeadingWithId({
+      children: headingChildren,
+      className,
+      ...props
+    }: React.HTMLAttributes<HTMLHeadingElement>) {
       const text =
-        typeof props.children === "string"
-          ? props.children
-          : extractText(props.children);
+        typeof headingChildren === "string"
+          ? headingChildren
+          : extractText(headingChildren);
       const id = getIdForHeading(text);
 
-      const hProps = { ...props, id };
+      // `scroll-mt-4` keeps the heading clear of the container's top edge when
+      // scrolled to via a shared hash link; `group` drives the anchor's hover.
+      const mergedClassName = enableHeadingLinks
+        ? `group scroll-mt-4${className ? ` ${className}` : ""}`
+        : className;
+      const hProps = { ...props, id, className: mergedClassName };
+      const inner = (
+        <>
+          {headingChildren}
+          {enableHeadingLinks && <HeadingAnchor id={id} />}
+        </>
+      );
       switch (level) {
-        case 1: return <h1 {...hProps} />;
-        case 2: return <h2 {...hProps} />;
-        case 3: return <h3 {...hProps} />;
-        default: return <h4 {...hProps} />;
+        case 1: return <h1 {...hProps}>{inner}</h1>;
+        case 2: return <h2 {...hProps}>{inner}</h2>;
+        case 3: return <h3 {...hProps}>{inner}</h3>;
+        default: return <h4 {...hProps}>{inner}</h4>;
       }
     };
   }
