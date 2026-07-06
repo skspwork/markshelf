@@ -1,0 +1,68 @@
+name: Deploy demo (Fly.io)
+
+# push → verify → build → deploy → smoke test on the live URL.
+# Deploys markshelf's own docs as a self-documenting demo at https://markshelf-demo.fly.dev
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  # One deploy at a time; never cancel a deploy that is already rolling out.
+  group: deploy-fly
+  cancel-in-progress: false
+
+jobs:
+  # Gate: never deploy code that does not pass the repo's own checks.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://markshelf-demo.fly.dev
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the baked .git yields a real timeline/history.
+          fetch-depth: 0
+
+      - uses: docker/setup-buildx-action@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Authenticate Docker to the Fly registry
+        run: flyctl auth docker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Build & push demo image
+        run: |
+          IMAGE="registry.fly.io/markshelf-demo:${GITHUB_SHA}"
+          docker buildx build \
+            -f docker/Dockerfile.demo \
+            -t "$IMAGE" \
+            --push \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            .
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy to Fly
+        run: flyctl deploy --image "$IMAGE" --wait-timeout 5m
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Smoke test the live site
+        run: bash scripts/smoke-test.sh https://markshelf-demo.fly.dev

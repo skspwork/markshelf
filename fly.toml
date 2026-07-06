@@ -1,0 +1,38 @@
+# Fly.io config for the public markshelf demo.
+# Deployed automatically on push to master by .github/workflows/deploy.yml,
+# which builds docker/Dockerfile.demo and pushes the image; CI passes the image
+# with `flyctl deploy --image ...`, so the [build] section below is only used
+# for local `fly deploy`.
+
+app = "markshelf-demo"
+primary_region = "nrt"   # Tokyo
+
+[build]
+  dockerfile = "docker/Dockerfile.demo"
+
+[env]
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # SSE (/api/watch) は常時接続なので、マシンを止めない・最低1台は起こしておく
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
