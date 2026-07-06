@@ -46,6 +46,13 @@ export function TableOfContents({ headings, scrollContainer }: Props) {
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         setActiveId(id);
+        // Reflect the section in the URL hash so the address bar stays a
+        // shareable deep link (?file=...#heading-id) without adding history.
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.hash = id;
+          window.history.replaceState(null, "", url.toString());
+        }
       }
     },
     [],

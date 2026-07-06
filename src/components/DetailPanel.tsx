@@ -64,6 +64,39 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
       .catch(() => setContent(null));
   }, [filePath, refreshTick]);
 
+  // When opened via a shared link (?file=...#heading-id), scroll the matching
+  // heading into view once its content has rendered. Runs once per file load.
+  const scrolledHashRef = useRef<string | null>(null);
+  useEffect(() => {
+    scrolledHashRef.current = null;
+  }, [filePath]);
+  useEffect(() => {
+    if (tab !== "content" || content === null || headings.length === 0) return;
+    if (typeof window === "undefined") return;
+    const rawHash = window.location.hash.replace(/^#/, "");
+    if (!rawHash) return;
+    let hash = rawHash;
+    try {
+      hash = decodeURIComponent(rawHash);
+    } catch {
+      /* keep raw */
+    }
+    const key = `${filePath}#${hash}`;
+    if (scrolledHashRef.current === key) return;
+    if (!headings.some((h) => h.id === hash)) return;
+
+    const raf = requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      const el = document.getElementById(hash);
+      if (!container || !el) return;
+      const cRect = container.getBoundingClientRect();
+      const eRect = el.getBoundingClientRect();
+      container.scrollTop += eRect.top - cRect.top - 16;
+      scrolledHashRef.current = key;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [tab, content, headings, filePath]);
+
   const handlePreviewShow = useCallback((path: string, rect: DOMRect) => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
     if (showTimer.current) clearTimeout(showTimer.current);
@@ -183,6 +216,7 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
             <div className="flex-1 overflow-y-auto" ref={scrollRef}>
               <div className="p-4">
                 <Markdown
+                  enableHeadingLinks
                   onHeadingsExtracted={setHeadings}
                   fileRefs={fileRefs}
                   currentPath={filePath}
