@@ -1,9 +1,16 @@
 # デプロイ（Fly.io 自動デプロイ + Web 動作確認）
 
-`master` に push すると、GitHub Actions が **検証 → イメージビルド → Fly.io デプロイ → 実 URL のスモークテスト** まで自動で実行します。デプロイされるのは markshelf 自身の `docs/` を焼き込んだデモサイトです。
+2種類の自動デプロイがあります。
 
-- 公開 URL: <https://markshelf-demo.fly.dev>
-- パイプライン: [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+| | トリガー | URL | 用途 |
+|---|---|---|---|
+| **本番デモ** | `master` へ push | `https://markshelf-demo.fly.dev`（固定） | マージ済みの内容を反映 |
+| **PR プレビュー** | PR の open / 更新 | `https://markshelf-pr-<番号>.fly.dev`（PR 毎） | **マージ前**にブランチをレビュー。PR クローズで自動破棄 |
+
+どちらもデプロイ後に実 URL のスモークテストが走り、失敗すればワークフローも失敗します。表示するのは markshelf 自身の `docs/` を焼き込んだサイトです。
+
+- 本番パイプライン: [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+- プレビューパイプライン: [.github/workflows/preview.yml](.github/workflows/preview.yml)
 - デモ用イメージ: [docker/Dockerfile.demo](docker/Dockerfile.demo)（配布用ベースイメージと違い docs/ と `.git` を焼き込み、`MARKSHELF_ROOT=/app/docs`）
 - スモークテスト: [scripts/smoke-test.sh](scripts/smoke-test.sh)
 
@@ -47,13 +54,33 @@ push (master) ──▶ verify (typecheck / lint / test)
 
    （GitHub 側で `Settings → Environments → production` を使う場合は、その環境シークレットとして登録しても可。）
 
-3. **初回デプロイ**（ワークフローを手動起動、または master へ push）:
+3. **PR プレビュー用の org スコープトークンを登録**（プレビューはアプリの作成/破棄を伴うため、上記のアプリスコープトークンでは権限不足）:
+
+   ```bash
+   fly orgs list                              # Fly の org スラッグを確認（例: personal / skspwork）
+   fly tokens create org <org-slug> -x 999999h
+   gh secret set FLY_ORG_TOKEN --body "<コピーしたトークン>"
+
+   # org スラッグが personal 以外なら GitHub の変数にも設定
+   gh variable set FLY_ORG --body "<org-slug>"
+   ```
+
+4. **初回デプロイ**（ワークフローを手動起動、または master へ push）:
 
    ```bash
    gh workflow run "Deploy demo (Fly.io)"
    ```
 
    以降は `master` への push で自動的に回ります。
+
+## PR プレビュー（マージ前レビュー）
+
+PR を開くと [preview.yml](.github/workflows/preview.yml) が動き、そのブランチを `markshelf-pr-<番号>` という独立した Fly アプリにデプロイします。
+
+- URL は PR に自動コメントされます（`https://markshelf-pr-<番号>.fly.dev`）。
+- PR に push するたびに更新、**PR をクローズ/マージすると自動で `flyctl apps destroy`**。
+- 本番と同じ demo イメージ・スモークテストを使いますが、`fly.preview.toml` で `auto_stop_machines = "suspend"` / `min_machines_running = 0` にしてあり、アイドル時は停止してコストを抑えます（初回アクセスはコールドスタート）。
+- フォークからの PR はシークレットにアクセスできないため、プレビューはスキップされます（同一リポジトリのブランチのみ）。
 
 ## ローカルから手動デプロイ
 
