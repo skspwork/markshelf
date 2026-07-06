@@ -33,6 +33,10 @@ jobs:
     environment:
       name: production
       url: https://markshelf-demo.fly.dev
+    env:
+      # Unified on the org-scoped token (same one previews use). flyctl reads
+      # FLY_API_TOKEN regardless of the secret's name.
+      FLY_API_TOKEN: ${{ secrets.FLY_ORG_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,8 +48,6 @@ jobs:
 
       - name: Authenticate Docker to the Fly registry
         run: flyctl auth docker
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       - name: Build & push demo image
         run: |
@@ -61,8 +63,6 @@ jobs:
 
       - name: Deploy to Fly
         run: flyctl deploy --image "$IMAGE" --wait-timeout 5m
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       - name: Smoke test the live site
         run: bash scripts/smoke-test.sh https://markshelf-demo.fly.dev

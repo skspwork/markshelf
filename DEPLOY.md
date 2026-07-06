@@ -45,27 +45,22 @@ push (master) ──▶ verify (typecheck / lint / test)
 
    別名にしたい場合は `fly.toml`・`deploy.yml`・`DEPLOY.md` 内の `markshelf-demo` を置換してください。
 
-2. **デプロイ用トークンを発行し、GitHub のシークレットに登録**:
-
-   ```bash
-   fly tokens create deploy -x 999999h        # 出力された FlyV1 ... トークンをコピー
-   gh secret set FLY_API_TOKEN --body "<コピーしたトークン>"
-   ```
-
-   （GitHub 側で `Settings → Environments → production` を使う場合は、その環境シークレットとして登録しても可。）
-
-3. **PR プレビュー用の org スコープトークンを登録**（プレビューはアプリの作成/破棄を伴うため、上記のアプリスコープトークンでは権限不足）:
+2. **org スコープのトークンを1つ発行して登録**（本番デプロイと PR プレビューの両方がこの1つを使う。プレビューはアプリの作成/破棄を伴うため org スコープが必須）:
 
    ```bash
    fly orgs list                              # Fly の org スラッグを確認（例: personal / skspwork）
-   fly tokens create org <org-slug> -x 999999h
-   gh secret set FLY_ORG_TOKEN --body "<コピーしたトークン>"
+   # トークンを画面に出さず、そのままシークレットへパイプする
+   fly tokens create org <org-slug> -x 999999h | gh secret set FLY_ORG_TOKEN
 
    # org スラッグが personal 以外なら GitHub の変数にも設定
    gh variable set FLY_ORG --body "<org-slug>"
    ```
 
-4. **初回デプロイ**（ワークフローを手動起動、または master へ push）:
+   > 本番 [deploy.yml](.github/workflows/deploy.yml) も `FLY_ORG_TOKEN` を使います（flyctl は環境変数 `FLY_API_TOKEN` を読むだけなので、シークレット名は問いません）。アプリスコープの `FLY_API_TOKEN` は不要なので、あれば削除して構いません（`gh secret delete FLY_API_TOKEN`）。
+   >
+   > 最小権限にこだわる場合は、本番だけ `fly tokens create deploy -a markshelf-demo -x 999999h | gh secret set FLY_API_TOKEN` でアプリスコープトークンを作り、[deploy.yml](.github/workflows/deploy.yml) の `FLY_ORG_TOKEN` を `FLY_API_TOKEN` に戻してください。
+
+3. **初回デプロイ**（ワークフローを手動起動、または master へ push）:
 
    ```bash
    gh workflow run "Deploy demo (Fly.io)"
