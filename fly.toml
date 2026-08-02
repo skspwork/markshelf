@@ -16,10 +16,13 @@ primary_region = "nrt"   # Tokyo
 [http_service]
   internal_port = 3000
   force_https = true
-  # SSE (/api/watch) は常時接続なので、マシンを止めない・最低1台は起こしておく
-  auto_stop_machines = "off"
+  # コスト最優先: アイドル時はマシンを停止し、最低起動数は 0（scale-to-zero）。
+  # アクセスが来たときだけ起動する。無アクセスならほぼ $0。SSE(/api/watch) の
+  # 常時接続を切らしたくない場合は auto_stop_machines="off" / min_machines_running=1
+  # に戻す（その場合は常時課金）。
+  auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 0
 
   [http_service.concurrency]
     type = "requests"

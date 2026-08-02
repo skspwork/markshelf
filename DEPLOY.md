@@ -84,8 +84,33 @@ fly deploy        # fly.toml の [build] から docker/Dockerfile.demo をビル
 scripts/smoke-test.sh https://markshelf-demo.fly.dev
 ```
 
+## コスト管理と一時停止
+
+Fly は**起動中マシンの実行時間**に課金します（停止中・0台なら $0。IPv6 dedicated と IPv4 shared は無料）。
+
+- **スケールゼロ設定**: `fly.toml` は `auto_stop_machines = "stop"` / `min_machines_running = 0`。アクセスが来たときだけ起動し、アイドルで停止。無アクセスならほぼ $0。初回アクセスはコールドスタート。
+- **1台のみ**: デプロイは `--ha=false`（未指定だと冗長構成で2台作られ常時課金の原因になる）。
+- **SSE を常時保ちたい場合**は `auto_stop_machines = "off"` / `min_machines_running = 1` に戻す（＝常時課金）。
+
+### 完全に止める / 再開する
+
+```bash
+# いま動いているマシンを全停止（$0。アプリ設定・URL は残る）
+fly scale count 0 -a markshelf-demo
+
+# 自動デプロイ／プレビューを止める（push でマシンが復活しないように）
+gh workflow disable "Deploy demo (Fly.io)"
+gh workflow disable "Preview deploy (Fly.io)"
+
+# ---- 再開するとき ----
+gh workflow enable "Deploy demo (Fly.io)"
+gh workflow enable "Preview deploy (Fly.io)"
+fly deploy -a markshelf-demo --ha=false     # または master へ push
+```
+
+> プレビュー環境（`markshelf-pr-<n>`）は PR クローズで自動破棄され、アイドルで suspend するので低コストですが、開いた PR に push するたび数分マシンが動きます。課金を完全に避けたい期間は上記のとおりプレビューも disable してください。
+
 ## 補足
 
-- **常時起動**: `fly.toml` は `min_machines_running = 1` / `auto_stop_machines = "off"`。SSE（`/api/watch`）の常時接続を切らないため。コストを抑えたい場合は `auto_stop_machines = "suspend"` に変更可（初回アクセスにコールドスタートが乗ります）。
 - **リージョン**: `primary_region = "nrt"`（東京）。
 - マージや本番反映の最終判断は人間が行う運用（[CLAUDE.md の検証ゲート](CLAUDE.md)）と矛盾しません。ここで自動化しているのは「master に入ったものをデモへ反映して実挙動を確認する」ところまでです。

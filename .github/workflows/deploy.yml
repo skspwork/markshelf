@@ -62,7 +62,8 @@ jobs:
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Deploy to Fly
-        run: flyctl deploy --image "$IMAGE" --wait-timeout 5m
+        # --ha=false で1台のみ（デフォルトは冗長構成で2台作られ、常時課金の原因になる）
+        run: flyctl deploy --image "$IMAGE" --ha=false --wait-timeout 5m
 
       - name: Smoke test the live site
         run: bash scripts/smoke-test.sh https://markshelf-demo.fly.dev
