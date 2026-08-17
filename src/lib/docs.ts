@@ -1,7 +1,17 @@
 import fs from "fs";
 import path from "path";
 
-const DOCS_ROOT = process.env.MARKSHELF_ROOT || process.cwd();
+function resolveDocsRoot(): string {
+  if (process.env.MARKSHELF_ROOT) return process.env.MARKSHELF_ROOT;
+  // On Vercel (serverless), the repo is deployed with the project root as the
+  // function's cwd, and docs/ is bundled in via outputFileTracingIncludes
+  // (next.config.ts). git-backed features (history/timeline/diff) degrade to
+  // empty here because there is no git binary at runtime — that's expected.
+  if (process.env.VERCEL) return path.join(process.cwd(), "docs");
+  return process.cwd();
+}
+
+const DOCS_ROOT = resolveDocsRoot();
 
 const IGNORE_DIRS = new Set(["node_modules", ".git", ".next", "dist", ".turbo"]);
 const MD_EXT = /\.md$/i;
