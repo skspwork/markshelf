@@ -1,4 +1,5 @@
 import type { FileRef } from "./docs";
+import { stripFencedCode } from "./markdown";
 
 export interface GraphNode {
   id: string;
@@ -19,13 +20,11 @@ export interface LinkGraph {
 // The leading capture group absorbs a non-"!" char (or string start) to avoid
 // matching image links.
 const LINK_RE = /(^|[^!])\[([^\]]*)\]\(([^)]+)\)/g;
-// Fenced code blocks (``` or ~~~) — stripped before scanning
-const FENCE_RE = /(^|\n)(```|~~~)[^\n]*\n[\s\S]*?\n\2/g;
 // Inline code `...`
 const INLINE_CODE_RE = /`[^`\n]*`/g;
 
 function stripCode(content: string): string {
-  return content.replace(FENCE_RE, "").replace(INLINE_CODE_RE, "");
+  return stripFencedCode(content).replace(INLINE_CODE_RE, "");
 }
 
 function resolveLink(

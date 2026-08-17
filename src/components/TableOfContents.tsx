@@ -2,11 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 
-export interface HeadingInfo {
-  id: string;
-  text: string;
-  level: number;
-}
+import type { HeadingInfo } from "@/lib/markdown";
+
+export type { HeadingInfo };
 
 interface Props {
   headings: HeadingInfo[];

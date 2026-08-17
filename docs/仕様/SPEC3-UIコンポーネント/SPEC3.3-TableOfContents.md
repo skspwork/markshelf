@@ -5,7 +5,8 @@
 ## 設計
 
 - `<TableOfContents>` コンポーネント (`src/components/TableOfContents.tsx`) として実装
-- 見出し抽出は `<Markdown>` 側 (`src/components/Markdown.tsx`) の `parseHeadings()` で**Markdown ソースから直接**行う。HTML から拾うのではなく、フェンスコードブロック (\`\`\` / \~\~\~) の中を明示的にスキップしてから `^(#{1,4})\s+(.+)$` にマッチさせる
+- 見出し抽出は `src/lib/markdown.ts` の `parseHeadings()` で**Markdown ソースから直接**行う。HTML から拾うのではなく、フェンスコードブロック (\`\`\` / \~\~\~) の中を明示的にスキップしてから `^(#{1,4})\s+(.+)$` にマッチさせる
+- フェンスの開閉判定は CommonMark 準拠（閉じフェンスは**開始と同じ文字・同じ長さ以上・情報文字列なし**）。これにより \`\`\`\`markdown … \`\`\`\` のように Markdown を入れ子で埋め込んだコードブロックでも、内側の \`\`\` で閉じたと誤認せず、コード中の `# コメント` が目次に混入したり以降の見出しが丸ごと欠落したりしない
 - 見出し ID は `slugify(text)` で生成し、同じテキストが複数回現れる場合は `-1`, `-2` … のサフィックスで重複回避
 - 表示はレベル（H1〜H4）に応じてインデント、スクロール位置に一番近い見出しを IntersectionObserver でハイライト
 - 見出しクリックで対象へスムーズスクロールし、あわせて `location.hash` を当該見出し ID へ `history.replaceState` で更新する（アドレスバーが共有 URL に追従。詳細は [SPEC5.2 URL クエリ](../SPEC5-永続化/SPEC5.2-URLクエリ.md)）

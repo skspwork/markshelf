@@ -7,6 +7,7 @@ import { Link2, Check } from "lucide-react";
 import type { HeadingInfo } from "./TableOfContents";
 import { MermaidBlock } from "./MermaidBlock";
 import { withBasePath } from "@/lib/basePath";
+import { parseHeadings, slugify } from "@/lib/markdown";
 
 export interface FileRef {
   displayName: string;
@@ -62,49 +63,6 @@ function HeadingAnchor({ id }: { id: string }) {
       {copied ? <Check size={13} /> : <Link2 size={13} />}
     </a>
   );
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]/gu, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-}
-
-/** Parse headings from raw markdown text so IDs are deterministic and not affected by React strict mode */
-function parseHeadings(markdown: string): HeadingInfo[] {
-  const headings: HeadingInfo[] = [];
-  const seen = new Map<string, number>();
-  const headingRe = /^(#{1,4})\s+(.+)$/;
-  const fenceRe = /^[ \t]*(`{3,}|~{3,})/;
-  let fence: string | null = null;
-  for (const line of markdown.split("\n")) {
-    const fenceMatch = fenceRe.exec(line);
-    if (fenceMatch) {
-      const marker = fenceMatch[1][0];
-      if (fence === null) {
-        fence = marker;
-        continue;
-      }
-      if (fenceMatch[1].startsWith(fence)) {
-        fence = null;
-        continue;
-      }
-    }
-    if (fence !== null) continue;
-    const m = headingRe.exec(line);
-    if (!m) continue;
-    const level = m[1].length;
-    const text = m[2].replace(/[#*_`[\]]/g, "").trim();
-    const base = slugify(text) || "heading";
-    const count = seen.get(base) ?? 0;
-    seen.set(base, count + 1);
-    const id = count === 0 ? base : `${base}-${count}`;
-    headings.push({ id, text, level });
-  }
-  return headings;
 }
 
 export function Markdown({
