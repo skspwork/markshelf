@@ -9,6 +9,13 @@ import { join } from "path";
 const root = process.cwd();
 const standalone = join(root, ".next/standalone");
 
+// Vercel builds are not standalone (see next.config.ts), so there is nothing
+// to pack — skip cleanly instead of failing the build.
+if (process.env.VERCEL) {
+  console.log("Skipping static pack on Vercel (non-standalone build).");
+  process.exit(0);
+}
+
 if (!existsSync(standalone)) {
   console.error("Error: .next/standalone not found. Did `next build` run?");
   process.exit(1);
