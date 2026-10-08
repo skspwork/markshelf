@@ -126,27 +126,6 @@ export function Markdown({
     onHeadingsExtracted?.(headings);
   }, [headings, onHeadingsExtracted]);
 
-  // Build autolink regex from fileRefs
-  const autolinkMap = useMemo(() => {
-    if (!fileRefs || fileRefs.length === 0) return null;
-    const map = new Map<string, string>();
-    const filtered = fileRefs
-      .filter((f) => f.displayName.length > 2 && f.path !== currentPath)
-      .sort((a, b) => b.displayName.length - a.displayName.length);
-    for (const f of filtered) {
-      map.set(f.displayName, f.path);
-    }
-    return map;
-  }, [fileRefs, currentPath]);
-
-  const autolinkRegex = useMemo(() => {
-    if (!autolinkMap || autolinkMap.size === 0) return null;
-    const escaped = Array.from(autolinkMap.keys()).map((n) =>
-      n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-    );
-    return new RegExp(`(${escaped.join("|")})`, "g");
-  }, [autolinkMap]);
-
   const fileSet = useMemo(
     () => new Set((fileRefs ?? []).map((f) => f.path)),
     [fileRefs],
@@ -299,15 +278,9 @@ export function Markdown({
       }
       return <pre>{children}</pre>;
     },
-    // Auto-link rendering: intercept <a> with "autolink:" prefix,
-    // and resolve relative markdown links to docs paths so they behave like autolinks.
+    // Resolve relative markdown links to docs paths so they navigate in-app.
     a: ({ href, children: linkChildren, ...rest }) => {
-      let targetPath: string | null = null;
-      if (href?.startsWith("autolink:")) {
-        targetPath = href.slice("autolink:".length);
-      } else if (href) {
-        targetPath = resolveRelativeLink(href);
-      }
+      const targetPath = href ? resolveRelativeLink(href) : null;
 
       if (targetPath) {
         const resolved = targetPath;
@@ -342,84 +315,7 @@ export function Markdown({
       const apiSrc = withBasePath(`/api/asset?path=${encodeURIComponent(resolved)}`);
       return <img src={apiSrc} alt={alt} {...rest} />;
     },
-    // Inject auto-links into text content
-    p: ({ children: pChildren, ...rest }) => {
-      return <p {...rest}>{processAutolinks(pChildren)}</p>;
-    },
-    li: ({ children: liChildren, ...rest }) => {
-      return <li {...rest}>{processAutolinks(liChildren)}</li>;
-    },
-    td: ({ children: tdChildren, ...rest }) => {
-      return <td {...rest}>{processAutolinks(tdChildren)}</td>;
-    },
   };
-
-  function processAutolinks(node: React.ReactNode): React.ReactNode {
-    if (!autolinkRegex || !autolinkMap) return node;
-
-    if (typeof node === "string") {
-      return splitWithAutolinks(node);
-    }
-
-    if (Array.isArray(node)) {
-      return node.map((child, i) => {
-        if (typeof child === "string") {
-          return <span key={i}>{splitWithAutolinks(child)}</span>;
-        }
-        return child;
-      });
-    }
-
-    return node;
-  }
-
-  function splitWithAutolinks(text: string): React.ReactNode {
-    if (!autolinkRegex || !autolinkMap) return text;
-
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-
-    // Reset regex
-    autolinkRegex.lastIndex = 0;
-
-    while ((match = autolinkRegex.exec(text)) !== null) {
-      const matchedText = match[0];
-      const targetPath = autolinkMap.get(matchedText);
-      if (!targetPath) continue;
-
-      if (match.index > lastIndex) {
-        parts.push(text.slice(lastIndex, match.index));
-      }
-
-      parts.push(
-        <span
-          key={`${match.index}-${matchedText}`}
-          className="text-[var(--brand-primary)] border-b border-dashed border-[var(--brand-primary)] cursor-pointer hover:bg-blue-50 transition-colors"
-          onClick={(e) => {
-            e.preventDefault();
-            onPreviewHide?.();
-            onNavigate?.(targetPath);
-          }}
-          onMouseEnter={(e) => {
-            const rect = (e.target as HTMLElement).getBoundingClientRect();
-            onPreviewShow?.(targetPath, rect);
-          }}
-          onMouseLeave={() => onPreviewHide?.()}
-        >
-          {matchedText}
-        </span>,
-      );
-
-      lastIndex = match.index + matchedText.length;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push(text.slice(lastIndex));
-    }
-
-    return parts.length === 0 ? text : parts;
-  }
 
   return (
     <div
