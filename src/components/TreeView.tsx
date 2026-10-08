@@ -217,7 +217,7 @@ function TreeNode({
           <FileText size={14} className="shrink-0" style={{ color: "var(--file-border)" }} />
         )}
         <span
-          className={`truncate ${
+          className={`truncate leading-normal ${
             isFolder ? "font-medium text-[var(--folder-text)]" : ""
           } ${isSelected ? "font-medium" : ""}`}
         >
