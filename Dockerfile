@@ -3,7 +3,7 @@
 # --- 依存インストール専用ステージ ---
 # package.json / package-lock.json が変わらない限り、ここはキャッシュが
 # 再利用される（重い `npm ci` をソース変更のたびに流さないため）
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
@@ -11,7 +11,7 @@ RUN npm ci
 # --- ランタイム兼ビルドステージ ---
 # deps から node_modules を受け取り、ソースを入れて Next.js のデフォルト
 # ビルド（basePath なし）まで済ませたうえで、起動用イメージとして仕上げる
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app
 
 # git は simple-git（変更履歴・タイムライン）が必要とする
