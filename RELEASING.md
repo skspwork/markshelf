@@ -16,6 +16,17 @@ git タグ `v*.*.*` を push すると、GitHub Actions が以下を同時配布
    - Name: `NPM_TOKEN`
    - Secret: 生成したトークン
 
+## Claude Code でリリースする
+
+Claude Code で `/release patch`（または `minor` / `major`）と打つと、[.claude/skills/release/SKILL.md](.claude/skills/release/SKILL.md) に沿って以下を行う:
+
+1. 前回タグからの変更を読み、リリースノートの下書きを作る
+2. 新バージョンとノートを見せて確認を取る
+3. 下の「通常リリース」の手順 2〜4 を実行する
+4. そのノートで GitHub Release を作る
+
+`gh` CLI へのログイン（`gh auth login`）が必要。
+
 ## 通常リリース
 
 1. `master` が出したいバージョンの状態になっているか確認
@@ -53,4 +64,5 @@ git タグ `v*.*.*` を push すると、GitHub Actions が以下を同時配布
 
 - [.github/workflows/npm-publish.yml](.github/workflows/npm-publish.yml) — npm 配布
 - [.github/workflows/docker-publish.yml](.github/workflows/docker-publish.yml) — Docker イメージ配布
+- [.claude/skills/release/SKILL.md](.claude/skills/release/SKILL.md) — Claude Code の `/release` スキル
 - [package.json](package.json) — `version` フィールドが配布バージョンの源
