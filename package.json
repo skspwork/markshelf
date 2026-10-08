@@ -57,14 +57,15 @@
     "simple-git": "^4.0.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.2.4",
     "@tailwindcss/postcss": "^4",
     "@types/cytoscape": "^3.21.9",
     "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^6.1.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^16.5.0",
     "tailwindcss": "^4",
     "typescript": "^5",
