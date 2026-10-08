@@ -26,6 +26,27 @@ interface Props {
   enableHeadingLinks?: boolean;
 }
 
+/** Copy text via a temporary textarea + execCommand (works without a secure context). */
+function legacyCopy(text: string): boolean {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.top = "0";
+  ta.style.left = "0";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  let ok: boolean;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+  document.body.removeChild(ta);
+  return ok;
+}
+
 /**
  * Anchor rendered next to a heading. Clicking it points the URL hash at the
  * heading and copies the resulting shareable link (?file=...#heading-id) to the
@@ -45,9 +66,17 @@ function HeadingAnchor({ id }: { id: string }) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     };
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(full).then(done).catch(done);
-    } else {
+    // navigator.clipboard is only available in secure contexts (HTTPS or
+    // localhost). When served over plain HTTP from another host it is
+    // undefined, so fall back to the legacy execCommand approach.
+    if (window.isSecureContext && navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(full)
+        .then(done)
+        .catch(() => {
+          if (legacyCopy(full)) done();
+        });
+    } else if (legacyCopy(full)) {
       done();
     }
   };
