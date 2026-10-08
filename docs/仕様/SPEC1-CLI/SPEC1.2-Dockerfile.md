@@ -5,7 +5,7 @@
 ## 設計
 
 - マルチステージビルド（`deps` ステージで `npm ci`、最終ステージで `next build`）
-- 最終イメージは `node:20-alpine` ベースで、`git` を追加インストール（simple-git 用）
+- 最終イメージは `node:22-alpine` ベースで、`git` を追加インストール（simple-git 用）
 - `MARKSHELF_ROOT=/docs` を既定値に設定し、ホスト側の `docs/` をボリュームマウント or `COPY` で配置する運用を想定
 - `VOLUME /docs` は**宣言しない**（下流 Dockerfile が `FROM` した後に `COPY . /docs` するケースで、親イメージの VOLUME 宣言が `COPY` を破棄してしまうため）
 - エントリポイント: `docker-entrypoint.sh`
