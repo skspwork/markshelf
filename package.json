@@ -60,7 +60,7 @@
     "@next/eslint-plugin-next": "^16.2.4",
     "@tailwindcss/postcss": "^4",
     "@types/cytoscape": "^3.21.9",
-    "@types/node": "^20",
+    "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.39.4",
