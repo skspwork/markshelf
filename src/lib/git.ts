@@ -1,5 +1,5 @@
 import path from "path";
-import simpleGit, { type LogResult, type DefaultLogFields } from "simple-git";
+import { simpleGit, type LogResult, type DefaultLogFields } from "simple-git";
 import { getDocsRoot } from "./docs";
 
 function getGit() {
