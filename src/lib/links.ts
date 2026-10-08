@@ -76,26 +76,7 @@ export function buildLinkGraph(
   files: FileRef[],
   readFile: (path: string) => string | null,
 ): LinkGraph {
-  const filtered = files
-    .filter((f) => f.displayName.length > 2)
-    .sort((a, b) => b.displayName.length - a.displayName.length);
-
   const fileSet = new Set(files.map((f) => f.path));
-  const nameToPath = new Map<string, string>();
-  for (const f of filtered) {
-    nameToPath.set(f.displayName, f.path);
-  }
-
-  const displayNameRegex =
-    filtered.length === 0
-      ? null
-      : new RegExp(
-          `(${filtered
-            .map((f) => f.displayName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-            .join("|")})`,
-          "g",
-        );
-
   const edgeSet = new Set<string>();
   const referencedPaths = new Set<string>();
 
@@ -111,25 +92,12 @@ export function buildLinkGraph(
   for (const file of files) {
     const raw = readFile(file.path);
     if (!raw) continue;
-    let content = stripCode(raw);
+    const content = stripCode(raw);
 
-    // 1) Explicit markdown links: resolve URL → add edge, then strip (url) portion
-    //    so URL path segments don't create spurious displayName matches.
-    content = content.replace(LINK_RE, (_m, lead, label, url) => {
-      const target = resolveLink(file.path, url, fileSet);
+    // Only explicit markdown links create edges.
+    for (const match of content.matchAll(LINK_RE)) {
+      const target = resolveLink(file.path, match[3], fileSet);
       if (target) addEdge(file.path, target);
-      return `${lead}[${label}]`;
-    });
-
-    // 2) DisplayName auto-matching on the stripped content
-    if (displayNameRegex) {
-      displayNameRegex.lastIndex = 0;
-      let match: RegExpExecArray | null;
-      while ((match = displayNameRegex.exec(content)) !== null) {
-        const targetPath = nameToPath.get(match[0]);
-        if (!targetPath) continue;
-        addEdge(file.path, targetPath);
-      }
     }
   }
 

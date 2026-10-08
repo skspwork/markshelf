@@ -48,7 +48,7 @@ describe("buildLinkGraph", () => {
     expect(edges).toHaveLength(0);
   });
 
-  it("本文中の displayName 自動マッチをエッジにする", () => {
+  it("本文中にファイル名が現れるだけではエッジにしない", () => {
     const files: FileRef[] = [
       { path: "a.md", displayName: "a-document" },
       { path: "glossary.md", displayName: "用語サンプル" },
@@ -57,7 +57,7 @@ describe("buildLinkGraph", () => {
       "a.md": "この文書は 用語サンプル を説明する。",
       "glossary.md": "# 用語サンプル",
     });
-    expect(edges).toContainEqual({ source: "a.md", target: "glossary.md" });
+    expect(edges).toHaveLength(0);
   });
 
   it("自己参照はエッジにしない", () => {
