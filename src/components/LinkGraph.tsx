@@ -176,6 +176,19 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
         for (const e of localEdges) hasIncoming.add(e.target);
         const rootPaths = localNodes.map((n) => n.id).filter((id) => !hasIncoming.has(id));
 
+        // Merge A→B and B→A into a single bidirectional edge
+        const edgeKeys = new Set(localEdges.map((e) => `${e.source}\0${e.target}`));
+        const seenPairs = new Set<string>();
+        const displayEdges: { source: string; target: string; mutual: boolean }[] = [];
+        for (const e of localEdges) {
+          const pairKey = e.source < e.target ? `${e.source}\0${e.target}` : `${e.target}\0${e.source}`;
+          const mutual = edgeKeys.has(`${e.target}\0${e.source}`);
+          const dedupeKey = mutual ? pairKey : `${e.source}\0${e.target}`;
+          if (seenPairs.has(dedupeKey)) continue;
+          seenPairs.add(dedupeKey);
+          displayEdges.push({ source: e.source, target: e.target, mutual });
+        }
+
         if (localNodes.length === 0) {
           setEmpty(true);
           setLoading(false);
@@ -195,11 +208,12 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
                 isCurrent: n.id === currentPath,
               },
             })),
-            ...localEdges.map((e, i) => ({
+            ...displayEdges.map((e, i) => ({
               data: {
                 id: `e${i}`,
                 source: e.source,
                 target: e.target,
+                mutual: e.mutual,
               },
             })),
           ],
@@ -244,6 +258,16 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
                 "target-arrow-shape": "triangle",
                 "curve-style": "bezier",
                 "arrow-scale": 0.8,
+              } as cytoscape.Css.Edge,
+            },
+            {
+              selector: "edge[?mutual]",
+              style: {
+                width: 2,
+                "line-color": "#8fb0e8",
+                "target-arrow-color": "#8fb0e8",
+                "source-arrow-color": "#8fb0e8",
+                "source-arrow-shape": "triangle",
               } as cytoscape.Css.Edge,
             },
             {
