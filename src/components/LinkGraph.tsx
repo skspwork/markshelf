@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
 import { useRefreshTick } from "@/lib/useRefreshTick";
 import { withBasePath } from "@/lib/basePath";
 import { Filter } from "lucide-react";
+
+cytoscape.use(fcose);
 
 interface GraphNode {
   id: string;
@@ -39,6 +42,18 @@ const DEPTH_OPTIONS: { value: number; label: string }[] = [
   { value: 3, label: "3階層" },
   { value: Infinity, label: "全階層" },
 ];
+
+function seededRandom(seed: string): () => number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  // mulberry32
+  return () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onPreviewHide }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -171,11 +186,6 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
           (e) => connectedPaths.has(e.source) && connectedPaths.has(e.target),
         );
 
-        // roots = nodes with no incoming edge within the component
-        const hasIncoming = new Set<string>();
-        for (const e of localEdges) hasIncoming.add(e.target);
-        const rootPaths = localNodes.map((n) => n.id).filter((id) => !hasIncoming.has(id));
-
         // Merge A→B and B→A into a single bidirectional edge
         const edgeKeys = new Set(localEdges.map((e) => `${e.source}\0${e.target}`));
         const seenPairs = new Set<string>();
@@ -198,100 +208,109 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
         // Destroy previous instance
         cyRef.current?.destroy();
 
-        const cy = cytoscape({
-          container: containerRef.current,
-          elements: [
-            ...localNodes.map((n) => ({
-              data: {
-                id: n.id,
-                label: n.label,
-                isCurrent: n.id === currentPath,
+        // fcose uses Math.random; seed it so the layout is stable across refreshes
+        const originalRandom = Math.random;
+        Math.random = seededRandom(currentPath);
+        let cy: cytoscape.Core;
+        try {
+          cy = cytoscape({
+            container: containerRef.current,
+            elements: [
+              ...localNodes.map((n) => ({
+                data: {
+                  id: n.id,
+                  label: n.label,
+                  isCurrent: n.id === currentPath,
+                },
+              })),
+              ...displayEdges.map((e, i) => ({
+                data: {
+                  id: `e${i}`,
+                  source: e.source,
+                  target: e.target,
+                  mutual: e.mutual,
+                },
+              })),
+            ],
+            style: [
+              {
+                selector: "node",
+                style: {
+                  label: "data(label)",
+                  "text-valign": "bottom",
+                  "text-halign": "center",
+                  "font-size": "11px",
+                  "font-family": "var(--font-sans)",
+                  color: "#4a5060",
+                  "text-margin-y": 6,
+                  "background-color": "#e8f0fe",
+                  "border-width": 2,
+                  "border-color": "#3b7ddb",
+                  width: 28,
+                  height: 28,
+                  "text-max-width": "180px",
+                  "text-wrap": "ellipsis",
+                  "cursor": "pointer",
+                } as cytoscape.Css.Node,
               },
-            })),
-            ...displayEdges.map((e, i) => ({
-              data: {
-                id: `e${i}`,
-                source: e.source,
-                target: e.target,
-                mutual: e.mutual,
+              {
+                selector: "node[?isCurrent]",
+                style: {
+                  "background-color": "#2563eb",
+                  "border-color": "#1d4ed8",
+                  color: "#1a1d23",
+                  "font-weight": "bold" as const,
+                  width: 36,
+                  height: 36,
+                } as cytoscape.Css.Node,
               },
-            })),
-          ],
-          style: [
-            {
-              selector: "node",
-              style: {
-                label: "data(label)",
-                "text-valign": "bottom",
-                "text-halign": "center",
-                "font-size": "11px",
-                "font-family": "var(--font-sans)",
-                color: "#4a5060",
-                "text-margin-y": 6,
-                "background-color": "#e8f0fe",
-                "border-width": 2,
-                "border-color": "#3b7ddb",
-                width: 28,
-                height: 28,
-                "text-max-width": "180px",
-                "text-wrap": "ellipsis",
-                "cursor": "pointer",
-              } as cytoscape.Css.Node,
-            },
-            {
-              selector: "node[?isCurrent]",
-              style: {
-                "background-color": "#2563eb",
-                "border-color": "#1d4ed8",
-                color: "#1a1d23",
-                "font-weight": "bold" as const,
-                width: 36,
-                height: 36,
-              } as cytoscape.Css.Node,
-            },
-            {
-              selector: "edge",
-              style: {
-                width: 1.5,
-                "line-color": "#c8ccd3",
-                "target-arrow-color": "#c8ccd3",
-                "target-arrow-shape": "triangle",
-                "curve-style": "bezier",
-                "arrow-scale": 0.8,
-              } as cytoscape.Css.Edge,
-            },
-            {
-              selector: "edge[?mutual]",
-              style: {
-                width: 2,
-                "line-color": "#8fb0e8",
-                "target-arrow-color": "#8fb0e8",
-                "source-arrow-color": "#8fb0e8",
-                "source-arrow-shape": "triangle",
-              } as cytoscape.Css.Edge,
-            },
-            {
-              selector: "node:active",
-              style: {
-                "overlay-opacity": 0,
-              } as cytoscape.Css.Node,
-            },
-          ],
-          layout: {
-            name: "breadthfirst",
-            animate: false,
-            padding: 50,
-            spacingFactor: 1.2,
-            directed: true,
-            grid: false,
-            roots: rootPaths.length > 0 ? rootPaths : [currentPath],
-            transform: (_node, pos) => ({ x: pos.x, y: -pos.y }),
-          } as cytoscape.BreadthFirstLayoutOptions,
-          userZoomingEnabled: true,
-          userPanningEnabled: true,
-          boxSelectionEnabled: false,
-          autoungrabify: false,
-        });
+              {
+                selector: "edge",
+                style: {
+                  width: 1.5,
+                  "line-color": "#c8ccd3",
+                  "target-arrow-color": "#c8ccd3",
+                  "target-arrow-shape": "triangle",
+                  "curve-style": "bezier",
+                  "arrow-scale": 0.8,
+                } as cytoscape.Css.Edge,
+              },
+              {
+                selector: "edge[?mutual]",
+                style: {
+                  width: 2,
+                  "line-color": "#8fb0e8",
+                  "target-arrow-color": "#8fb0e8",
+                  "source-arrow-color": "#8fb0e8",
+                  "source-arrow-shape": "triangle",
+                } as cytoscape.Css.Edge,
+              },
+              {
+                selector: "node:active",
+                style: {
+                  "overlay-opacity": 0,
+                } as cytoscape.Css.Node,
+              },
+            ],
+            layout: {
+              name: "fcose",
+              animate: false,
+              randomize: true,
+              quality: "proof",
+              padding: 50,
+              nodeDimensionsIncludeLabels: true,
+              idealEdgeLength: 120,
+              nodeRepulsion: 12000,
+              nodeSeparation: 100,
+            } as cytoscape.LayoutOptions,
+            userZoomingEnabled: true,
+            userPanningEnabled: true,
+            boxSelectionEnabled: false,
+            autoungrabify: false,
+          });
+        } finally {
+          Math.random = originalRandom;
+        }
 
         // Defer fit/center until container has layout dimensions
         requestAnimationFrame(() => {
