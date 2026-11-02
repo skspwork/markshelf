@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronDown, ChevronRight, Folder, FileText } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, FileText, FileCode } from "lucide-react";
+import { isHtmlPath } from "@/lib/fileKind";
 
 interface TreeEntry {
   name: string;
@@ -213,6 +214,8 @@ function TreeNode({
         )}
         {isFolder ? (
           <Folder size={14} className="shrink-0" style={{ color: "var(--folder-border)" }} />
+        ) : entry.type === "file" && isHtmlPath(entry.path) ? (
+          <FileCode size={14} className="shrink-0" style={{ color: "var(--file-border)" }} />
         ) : (
           <FileText size={14} className="shrink-0" style={{ color: "var(--file-border)" }} />
         )}

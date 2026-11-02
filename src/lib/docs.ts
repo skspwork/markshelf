@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { MD_EXT, HTML_EXT, isHtmlPath } from "./fileKind";
 
 function resolveDocsRoot(): string {
   if (process.env.MARKSHELF_ROOT) return process.env.MARKSHELF_ROOT;
@@ -14,7 +15,6 @@ function resolveDocsRoot(): string {
 const DOCS_ROOT = resolveDocsRoot();
 
 const IGNORE_DIRS = new Set(["node_modules", ".git", ".next", "dist", ".turbo"]);
-const MD_EXT = /\.md$/i;
 const ORDER_PREFIX = /^(\d+)[_\-.\s]/;
 
 export interface TreeEntry {
@@ -89,12 +89,12 @@ export function buildTree(dirPath: string = DOCS_ROOT, relativeTo: string = DOCS
         children,
         hasReadme,
       });
-    } else if (MD_EXT.test(item)) {
+    } else if (MD_EXT.test(item) || HTML_EXT.test(item)) {
       // Skip README.md as standalone entry (it's attached to the folder)
       if (item.toLowerCase() === "readme.md") continue;
       entries.push({
         name: item,
-        displayName: stripOrderPrefix(item).replace(MD_EXT, ""),
+        displayName: stripOrderPrefix(item).replace(MD_EXT, "").replace(HTML_EXT, ""),
         path: relPath,
         type: "file",
       });
@@ -145,7 +145,8 @@ export interface FileRef {
 export function flattenTree(entries: TreeEntry[]): FileRef[] {
   const refs: FileRef[] = [];
   for (const e of entries) {
-    if (e.type === "file") {
+    // HTML files are preview-only: keep them out of the link graph and search.
+    if (e.type === "file" && !isHtmlPath(e.path)) {
       refs.push({ path: e.path, displayName: e.displayName });
     }
     if (e.type === "folder") {

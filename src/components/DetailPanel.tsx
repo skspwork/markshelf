@@ -8,6 +8,7 @@ import { PreviewPopup } from "./PreviewPopup";
 import { LinkGraph } from "./LinkGraph";
 import { useRefreshTick } from "@/lib/useRefreshTick";
 import { withBasePath } from "@/lib/basePath";
+import { isHtmlPath } from "@/lib/fileKind";
 import { FileText, History, Network, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface FolderInfo {
@@ -47,6 +48,7 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
   const showTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const refreshTick = useRefreshTick();
+  const isHtml = isHtmlPath(filePath);
 
   useEffect(() => {
     setContent(null);
@@ -58,11 +60,13 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
   }, [filePath]);
 
   useEffect(() => {
+    // HTML is rendered by the iframe straight from /api/raw; nothing to fetch.
+    if (isHtml) return;
     fetch(withBasePath(`/api/file?path=${encodeURIComponent(filePath)}`))
       .then((r) => r.json())
       .then((data) => setContent(data.content ?? null))
       .catch(() => setContent(null));
-  }, [filePath, refreshTick]);
+  }, [filePath, isHtml, refreshTick]);
 
   // When opened via a shared link (?file=...#heading-id), scroll the matching
   // heading into view once its content has rendered. Runs once per file load.
@@ -145,7 +149,8 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
     document.addEventListener("mouseup", onMouseUp);
   }, []);
 
-  const fileName = filePath.split("/").pop()?.replace(/\.md$/i, "") || filePath;
+  const fileName = filePath.split("/").pop()?.replace(/\.(md|html?)$/i, "") || filePath;
+  const rawUrl = withBasePath(`/api/raw/${filePath.split("/").map(encodeURIComponent).join("/")}`);
 
   return (
     <div className="flex flex-col h-full">
@@ -210,7 +215,19 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
         </div>
       </div>
 
-      {tab === "content" ? (
+      {tab === "content" && isHtml ? (
+        <div className="flex-1 overflow-hidden bg-white">
+          {/* No allow-same-origin: scripts run in an opaque origin and cannot
+              touch the viewer's DOM, storage or APIs. Reload on file changes. */}
+          <iframe
+            key={refreshTick}
+            src={rawUrl}
+            title={fileName}
+            sandbox="allow-scripts allow-popups"
+            className="w-full h-full border-0"
+          />
+        </div>
+      ) : tab === "content" ? (
         content !== null ? (
           <div className="flex-1 flex overflow-hidden">
             <div className="flex-1 overflow-y-auto" ref={scrollRef}>
