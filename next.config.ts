@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/**": ["./docs/**/*"],
   },
+  experimental: {
+    agentUpgrade: "security",
+  },
 };
 
 export default nextConfig;
