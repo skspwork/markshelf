@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>システム構成</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f7f9;
+    --surface-2: #eef1f5;
+    --border: #d5dae1;
+    --text: #1f2328;
+    --muted: #5b6470;
+    --accent: #3b6fd8;
+    --client: #e8f0fe;
+    --client-line: #7aa0e8;
+    --server: #eaf6ee;
+    --server-line: #6fb486;
+    --lib: #fdf3e3;
+    --lib-line: #d6a34f;
+    --store: #f3ecfb;
+    --store-line: #a47fd6;
+    --arrow: #6b7380;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c;
+      --surface: #1e2126;
+      --surface-2: #262a30;
+      --border: #3a3f47;
+      --text: #e6e8eb;
+      --muted: #9aa3ae;
+      --accent: #7fa6f0;
+      --client: #1d2a42;
+      --client-line: #5a80c8;
+      --server: #1b3024;
+      --server-line: #4f9467;
+      --lib: #33291a;
+      --lib-line: #b0843b;
+      --store: #2a2238;
+      --store-line: #8a68b8;
+      --arrow: #8f98a4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.7 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 32px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  p.lead { color: var(--muted); margin: 0 0 20px; }
+  code { font: 12.5px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  .figure { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; overflow-x: auto; }
+  .figure svg { display: block; width: 100%; min-width: 760px; height: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; border: 1px solid; }
+  .lg-client::before { background: var(--client); border-color: var(--client-line) !important; }
+  .lg-server::before { background: var(--server); border-color: var(--server-line) !important; }
+  .lg-lib::before { background: var(--lib); border-color: var(--lib-line) !important; }
+  .lg-store::before { background: var(--store); border-color: var(--store-line) !important; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; background: var(--surface); }
+  .table-wrap { overflow-x: auto; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .card h3 { margin: 0 0 6px; font-size: 14px; }
+  .card p, .card ul { margin: 0; color: var(--muted); font-size: 13px; }
+  .card ul { padding-left: 18px; }
+
+  /* diagram */
+  .layer { stroke-width: 1.5; }
+  .layer-client { fill: var(--client); stroke: var(--client-line); }
+  .layer-server { fill: var(--server); stroke: var(--server-line); }
+  .layer-lib { fill: var(--lib); stroke: var(--lib-line); }
+  .layer-store { fill: var(--store); stroke: var(--store-line); }
+  .node { fill: var(--bg); stroke: var(--border); stroke-width: 1; }
+  .group { fill: none; stroke: var(--client-line); stroke-dasharray: 4 3; }
+  .title { font-size: 13px; font-weight: 700; fill: var(--text); }
+  .label { font-size: 12px; fill: var(--text); }
+  .sub { font-size: 10.5px; fill: var(--muted); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11.5px; fill: var(--text); }
+  .edge { stroke: var(--arrow); stroke-width: 1.2; fill: none; marker-end: url(#arrow); }
+  .edge-dash { stroke-dasharray: 5 4; }
+  .edge-label { font-size: 10px; fill: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>システム構成</h1>
+  <p class="lead">markshelf は 1 つの Next.js アプリとして動き、ブラウザ側の React UI が同一オリジンの API を呼び出す。API はドキュメントルート（<code>MARKSHELF_ROOT</code>）のファイルと git リポジトリを読み取るだけで、書き込みは行わない。</p>
+
+  <h2>全体図</h2>
+  <div class="figure">
+    <svg viewBox="0 0 1000 590" role="img" aria-label="ブラウザ、Next.js API、サーバーライブラリ、ファイルシステムの4層構成図">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--arrow)"/>
+        </marker>
+      </defs>
+
+      <!-- Layer 1: Browser -->
+      <rect class="layer layer-client" x="10" y="14" width="240" height="560" rx="10"/>
+      <text class="title" x="24" y="38">ブラウザ（React）</text>
+      <text class="sub" x="24" y="54">src/app/page.tsx · src/components</text>
+
+      <rect class="node" x="24" y="70" width="212" height="36" rx="6"/>
+      <text class="label" x="34" y="92">page.tsx（選択状態・?file=）</text>
+      <rect class="node" x="24" y="116" width="212" height="36" rx="6"/>
+      <text class="label" x="34" y="138">TreeView</text>
+      <rect class="node" x="24" y="162" width="212" height="36" rx="6"/>
+      <text class="label" x="34" y="184">SearchBar</text>
+
+      <rect class="group" x="20" y="206" width="220" height="198" rx="8"/>
+      <text class="label" x="30" y="224" font-weight="600">DetailPanel</text>
+      <rect class="node" x="30" y="232" width="200" height="30" rx="5"/>
+      <text class="label" x="40" y="252">Markdown / Mermaid</text>
+      <rect class="node" x="30" y="266" width="200" height="30" rx="5"/>
+      <text class="label" x="40" y="286">画像 &lt;img&gt;</text>
+      <rect class="node" x="30" y="300" width="200" height="30" rx="5"/>
+      <text class="label" x="40" y="320">HTML プレビュー（iframe）</text>
+      <rect class="node" x="30" y="334" width="200" height="30" rx="5"/>
+      <text class="label" x="40" y="354">LinkGraph（Cytoscape）</text>
+      <rect class="node" x="30" y="368" width="200" height="30" rx="5"/>
+      <text class="label" x="40" y="388">HistoryPanel / DiffView</text>
+
+      <rect class="node" x="24" y="414" width="212" height="36" rx="6"/>
+      <text class="label" x="34" y="436">TimelinePanel</text>
+      <rect class="node" x="24" y="460" width="212" height="36" rx="6"/>
+      <text class="label" x="34" y="482">PreviewPopup</text>
+      <rect class="node" x="24" y="506" width="212" height="52" rx="6"/>
+      <text class="label" x="34" y="526">useRefreshTick</text>
+      <text class="sub" x="34" y="544">EventSource で変更を購読</text>
+
+      <!-- Layer 2: API -->
+      <rect class="layer layer-server" x="300" y="14" width="210" height="560" rx="10"/>
+      <text class="title" x="314" y="38">Next.js API</text>
+      <text class="sub" x="314" y="54">src/app/api/*/route.ts</text>
+
+      <rect class="node" x="314" y="70" width="182" height="36" rx="6"/><text class="mono" x="324" y="92">/api/tree</text>
+      <rect class="node" x="314" y="116" width="182" height="36" rx="6"/><text class="mono" x="324" y="138">/api/file</text>
+      <rect class="node" x="314" y="162" width="182" height="36" rx="6"/><text class="mono" x="324" y="184">/api/search</text>
+      <rect class="node" x="314" y="208" width="182" height="36" rx="6"/><text class="mono" x="324" y="230">/api/graph</text>
+      <rect class="node" x="314" y="254" width="182" height="36" rx="6"/><text class="mono" x="324" y="276">/api/asset</text>
+      <rect class="node" x="314" y="300" width="182" height="36" rx="6"/><text class="mono" x="324" y="322">/api/raw/[...path]</text>
+      <rect class="node" x="314" y="346" width="182" height="36" rx="6"/><text class="mono" x="324" y="368">/api/history</text>
+      <rect class="node" x="314" y="392" width="182" height="36" rx="6"/><text class="mono" x="324" y="414">/api/timeline</text>
+      <rect class="node" x="314" y="438" width="182" height="36" rx="6"/><text class="mono" x="324" y="460">/api/diff</text>
+      <rect class="node" x="314" y="506" width="182" height="52" rx="6"/><text class="mono" x="324" y="528">/api/watch</text>
+      <text class="sub" x="324" y="546">SSE（text/event-stream）</text>
+
+      <!-- Layer 3: lib -->
+      <rect class="layer layer-lib" x="560" y="14" width="200" height="560" rx="10"/>
+      <text class="title" x="574" y="38">サーバーライブラリ</text>
+      <text class="sub" x="574" y="54">src/lib</text>
+
+      <rect class="node" x="574" y="70" width="172" height="150" rx="6"/>
+      <text class="mono" x="584" y="92">docs.ts</text>
+      <text class="sub" x="584" y="112">buildTree / flattenTree</text>
+      <text class="sub" x="584" y="128">readFile / readAsset</text>
+      <text class="sub" x="584" y="144">statFile</text>
+      <text class="sub" x="584" y="168">ルート外へのパスを拒否</text>
+      <text class="sub" x="584" y="184">（path traversal 対策）</text>
+
+      <rect class="node" x="574" y="250" width="172" height="62" rx="6"/>
+      <text class="mono" x="584" y="272">links.ts</text>
+      <text class="sub" x="584" y="290">リンク解析 + 自動マッチ</text>
+      <text class="sub" x="584" y="304">mtime でキャッシュ</text>
+
+      <rect class="node" x="574" y="346" width="172" height="128" rx="6"/>
+      <text class="mono" x="584" y="368">git.ts</text>
+      <text class="sub" x="584" y="388">getFileHistory</text>
+      <text class="sub" x="584" y="404">getTimeline</text>
+      <text class="sub" x="584" y="420">getFileDiff</text>
+      <text class="sub" x="584" y="444">git CLI を子プロセスで実行</text>
+
+      <rect class="node" x="574" y="506" width="172" height="52" rx="6"/>
+      <text class="mono" x="584" y="528">fs.watch</text>
+      <text class="sub" x="584" y="546">recursive 監視</text>
+
+      <!-- Layer 4: storage -->
+      <rect class="layer layer-store" x="810" y="14" width="180" height="560" rx="10"/>
+      <text class="title" x="824" y="38">ファイルシステム</text>
+      <text class="sub" x="824" y="54">読み取り専用</text>
+
+      <rect class="node" x="824" y="70" width="152" height="250" rx="6"/>
+      <text class="label" x="834" y="92" font-weight="600">ドキュメントルート</text>
+      <text class="mono" x="834" y="110">MARKSHELF_ROOT</text>
+      <text class="sub" x="834" y="136">*.md</text>
+      <text class="sub" x="834" y="152">*.html / *.htm</text>
+      <text class="sub" x="834" y="168">画像・CSS・JS・フォント</text>
+      <text class="sub" x="834" y="194">既定は起動時の cwd</text>
+      <text class="sub" x="834" y="210">Vercel では docs/</text>
+
+      <rect class="node" x="824" y="346" width="152" height="128" rx="6"/>
+      <text class="label" x="834" y="368" font-weight="600">.git</text>
+      <text class="sub" x="834" y="388">コミット履歴</text>
+      <text class="sub" x="834" y="404">（*.md が対象）</text>
+      <text class="sub" x="834" y="428">git が無い環境では</text>
+      <text class="sub" x="834" y="444">履歴系は空を返す</text>
+
+      <!-- Browser -> API -->
+      <path class="edge" d="M236,88 L314,88"/>
+      <path class="edge" d="M230,247 C270,247 270,134 314,134"/>
+      <path class="edge" d="M236,180 L314,180"/>
+      <path class="edge" d="M230,349 C272,349 272,226 314,226"/>
+      <path class="edge" d="M230,281 C270,281 270,272 314,272"/>
+      <path class="edge" d="M230,315 C270,315 270,318 314,318"/>
+      <path class="edge" d="M230,383 C270,383 270,364 314,364"/>
+      <path class="edge" d="M230,383 C272,383 272,456 314,456"/>
+      <path class="edge" d="M236,432 C272,432 272,410 314,410"/>
+      <path class="edge edge-dash" d="M314,532 L236,532"/>
+      <text class="edge-label" x="252" y="524">change</text>
+
+      <!-- API -> lib -->
+      <path class="edge" d="M496,88 L574,100"/>
+      <path class="edge" d="M496,134 L574,134"/>
+      <path class="edge" d="M496,180 L574,166"/>
+      <path class="edge" d="M496,226 L574,272"/>
+      <path class="edge" d="M496,272 L574,196"/>
+      <path class="edge" d="M496,318 L574,210"/>
+      <path class="edge" d="M496,364 L574,380"/>
+      <path class="edge" d="M496,410 L574,410"/>
+      <path class="edge" d="M496,456 L574,440"/>
+      <path class="edge edge-dash" d="M574,532 L496,532"/>
+
+      <!-- lib internal -->
+      <path class="edge" d="M660,220 L660,250"/>
+      <text class="edge-label" x="666" y="240">readFile</text>
+
+      <!-- lib -> storage -->
+      <path class="edge" d="M746,150 L824,150"/>
+      <text class="edge-label" x="758" y="142">fs 読み取り</text>
+      <path class="edge" d="M746,410 L824,410"/>
+      <text class="edge-label" x="750" y="400">git log/show</text>
+      <path class="edge edge-dash" d="M824,300 C792,300 785,312 785,332 L785,512 C785,528 770,532 746,532"/>
+      <text class="edge-label" x="780" y="440" text-anchor="middle" transform="rotate(-90 780 440)">変更通知</text>
+    </svg>
+    <div class="legend">
+      <span class="lg-client">クライアント</span>
+      <span class="lg-server">API ルート</span>
+      <span class="lg-lib">サーバー内部</span>
+      <span class="lg-store">データ源</span>
+      <span>実線: リクエスト ／ 破線: ファイル変更の通知</span>
+    </div>
+  </div>
+
+  <h2>API 一覧</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>エンドポイント</th><th>呼び出し元</th><th>処理</th><th>応答</th></tr></thead>
+      <tbody>
+        <tr><td><code>/api/tree</code></td><td>page.tsx</td><td>ルート以下を走査してツリーを作る（.md / .html）</td><td>JSON</td></tr>
+        <tr><td><code>/api/file?path=</code></td><td>DetailPanel, PreviewPopup</td><td>Markdown 本文を読む</td><td>JSON</td></tr>
+        <tr><td><code>/api/search?q=</code></td><td>SearchBar</td><td>全 Markdown を行単位で部分一致検索</td><td>JSON</td></tr>
+        <tr><td><code>/api/graph</code></td><td>LinkGraph</td><td>リンクグラフを生成（mtime キャッシュ）</td><td>JSON</td></tr>
+        <tr><td><code>/api/asset?path=</code></td><td>Markdown 内の画像</td><td>画像ファイルを返す</td><td>画像</td></tr>
+        <tr><td><code>/api/raw/{path}</code></td><td>HTML プレビュー iframe</td><td>HTML とその相対参照（CSS・JS・画像）を返す</td><td>各 MIME</td></tr>
+        <tr><td><code>/api/history?path=</code></td><td>HistoryPanel</td><td>ファイル単位の git log</td><td>JSON</td></tr>
+        <tr><td><code>/api/timeline</code></td><td>TimelinePanel</td><td>リポジトリ全体の変更タイムライン</td><td>JSON</td></tr>
+        <tr><td><code>/api/diff?path=&amp;hash=</code></td><td>DiffView</td><td>指定コミットでの差分</td><td>JSON</td></tr>
+        <tr><td><code>/api/watch</code></td><td>useRefreshTick</td><td>fs.watch の変更を SSE で配信。受信側は再取得する</td><td>SSE</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>配信形態</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>npx（ローカル閲覧）</h3>
+      <ul>
+        <li><code>bin/cli.mjs</code> が引数のディレクトリを <code>MARKSHELF_ROOT</code> に設定</li>
+        <li>同梱の <code>.next/standalone/server.js</code> を子プロセスで起動</li>
+        <li>ポートは <code>-p</code>（既定 3000）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Docker</h3>
+      <ul>
+        <li><code>/docs</code> をボリュームマウント、または派生イメージに焼き込む</li>
+        <li><code>BASE_PATH</code> を <code>NEXT_PUBLIC_BASE_PATH</code> に変換し、サブパス配信時は起動時にビルド</li>
+        <li>マウントした .git を読めるよう <code>safe.directory</code> を設定</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Vercel</h3>
+      <ul>
+        <li><code>docs/</code> を API 関数のバンドルに同梱して読む</li>
+        <li>実行環境に git が無いため、履歴・タイムライン・差分は空になる</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>セキュリティ境界</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>パスの検証</h3>
+      <p>docs.ts の読み取り関数は、解決後のパスがドキュメントルートの外を指すと null を返す。API はこれを 404 として応答する。</p>
+    </div>
+    <div class="card">
+      <h3>HTML の隔離</h3>
+      <p>HTML は <code>sandbox="allow-scripts"</code> の iframe（allow-same-origin なし）で表示し、<code>/api/raw</code> も CSP sandbox を付けて返す。HTML 内のスクリプトはビューア本体の DOM・ストレージ・API に触れない。</p>
+    </div>
+    <div class="card">
+      <h3>読み取り専用</h3>
+      <p>どの API もファイルや git リポジトリを変更しない。</p>
+    </div>
+  </div>
+</main>
+</body>
+</html>
