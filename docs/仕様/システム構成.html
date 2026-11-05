@@ -88,6 +88,18 @@
   .edge { stroke: var(--arrow); stroke-width: 1.2; fill: none; marker-end: url(#arrow); }
   .edge-dash { stroke-dasharray: 5 4; }
   .edge-label { font-size: 10px; fill: var(--muted); }
+
+  /* 印刷・PDF 化: 横向き A4 に図を収め、カードや表の行をページ途中で切らない */
+  @page { size: A4 landscape; margin: 12mm; }
+  @media print {
+    main { max-width: none; padding: 0; }
+    .figure { overflow: visible; break-inside: avoid; }
+    /* タイトルと同じ 1 ページ目に収まる高さに抑える */
+    .figure svg { min-width: 0; width: auto; max-width: 100%; max-height: 125mm; margin: 0 auto; }
+    .table-wrap { overflow: visible; }
+    tr, .card { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -123,7 +135,7 @@
       <rect class="node" x="30" y="266" width="200" height="30" rx="5"/>
       <text class="label" x="40" y="286">画像 &lt;img&gt;</text>
       <rect class="node" x="30" y="300" width="200" height="30" rx="5"/>
-      <text class="label" x="40" y="320">HTML プレビュー（iframe）</text>
+      <text class="label" x="40" y="320">HTML / PDF（iframe）</text>
       <rect class="node" x="30" y="334" width="200" height="30" rx="5"/>
       <text class="label" x="40" y="354">LinkGraph（Cytoscape）</text>
       <rect class="node" x="30" y="368" width="200" height="30" rx="5"/>
@@ -192,7 +204,7 @@
       <text class="label" x="834" y="92" font-weight="600">ドキュメントルート</text>
       <text class="mono" x="834" y="110">MARKSHELF_ROOT</text>
       <text class="sub" x="834" y="136">*.md</text>
-      <text class="sub" x="834" y="152">*.html / *.htm</text>
+      <text class="sub" x="834" y="152">*.html / *.htm / *.pdf</text>
       <text class="sub" x="834" y="168">画像・CSS・JS・フォント</text>
       <text class="sub" x="834" y="194">既定は起動時の cwd</text>
       <text class="sub" x="834" y="210">Vercel では docs/</text>
@@ -255,12 +267,12 @@
     <table>
       <thead><tr><th>エンドポイント</th><th>呼び出し元</th><th>処理</th><th>応答</th></tr></thead>
       <tbody>
-        <tr><td><code>/api/tree</code></td><td>page.tsx</td><td>ルート以下を走査してツリーを作る（.md / .html）</td><td>JSON</td></tr>
+        <tr><td><code>/api/tree</code></td><td>page.tsx</td><td>ルート以下を走査してツリーを作る（.md / .html / .pdf）</td><td>JSON</td></tr>
         <tr><td><code>/api/file?path=</code></td><td>DetailPanel, PreviewPopup</td><td>Markdown 本文を読む</td><td>JSON</td></tr>
         <tr><td><code>/api/search?q=</code></td><td>SearchBar</td><td>全 Markdown を行単位で部分一致検索</td><td>JSON</td></tr>
         <tr><td><code>/api/graph</code></td><td>LinkGraph</td><td>リンクグラフを生成（mtime キャッシュ）</td><td>JSON</td></tr>
         <tr><td><code>/api/asset?path=</code></td><td>Markdown 内の画像</td><td>画像ファイルを返す</td><td>画像</td></tr>
-        <tr><td><code>/api/raw/{path}</code></td><td>HTML プレビュー iframe</td><td>HTML とその相対参照（CSS・JS・画像）を返す</td><td>各 MIME</td></tr>
+        <tr><td><code>/api/raw/{path}</code></td><td>HTML / PDF プレビュー iframe</td><td>HTML とその相対参照（CSS・JS・画像）、PDF を返す</td><td>各 MIME</td></tr>
         <tr><td><code>/api/history?path=</code></td><td>HistoryPanel</td><td>ファイル単位の git log</td><td>JSON</td></tr>
         <tr><td><code>/api/timeline</code></td><td>TimelinePanel</td><td>リポジトリ全体の変更タイムライン</td><td>JSON</td></tr>
         <tr><td><code>/api/diff?path=&amp;hash=</code></td><td>DiffView</td><td>指定コミットでの差分</td><td>JSON</td></tr>
