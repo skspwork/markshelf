@@ -8,7 +8,7 @@ import { PreviewPopup } from "./PreviewPopup";
 import { LinkGraph } from "./LinkGraph";
 import { useRefreshTick } from "@/lib/useRefreshTick";
 import { withBasePath } from "@/lib/basePath";
-import { isHtmlPath } from "@/lib/fileKind";
+import { isHtmlPath, isPdfPath } from "@/lib/fileKind";
 import { FileText, History, Network, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface FolderInfo {
@@ -49,6 +49,7 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const refreshTick = useRefreshTick();
   const isHtml = isHtmlPath(filePath);
+  const isPdf = isPdfPath(filePath);
 
   useEffect(() => {
     setContent(null);
@@ -60,13 +61,13 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
   }, [filePath]);
 
   useEffect(() => {
-    // HTML is rendered by the iframe straight from /api/raw; nothing to fetch.
-    if (isHtml) return;
+    // HTML / PDF are rendered by the iframe straight from /api/raw; nothing to fetch.
+    if (isHtml || isPdf) return;
     fetch(withBasePath(`/api/file?path=${encodeURIComponent(filePath)}`))
       .then((r) => r.json())
       .then((data) => setContent(data.content ?? null))
       .catch(() => setContent(null));
-  }, [filePath, isHtml, refreshTick]);
+  }, [filePath, isHtml, isPdf, refreshTick]);
 
   // When opened via a shared link (?file=...#heading-id), scroll the matching
   // heading into view once its content has rendered. Runs once per file load.
@@ -149,7 +150,7 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
     document.addEventListener("mouseup", onMouseUp);
   }, []);
 
-  const fileName = filePath.split("/").pop()?.replace(/\.(md|html?)$/i, "") || filePath;
+  const fileName = filePath.split("/").pop()?.replace(/\.md$/i, "") || filePath;
   const rawUrl = withBasePath(`/api/raw/${filePath.split("/").map(encodeURIComponent).join("/")}`);
 
   return (
@@ -224,6 +225,17 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
             src={rawUrl}
             title={fileName}
             sandbox="allow-scripts allow-popups"
+            className="w-full h-full border-0"
+          />
+        </div>
+      ) : tab === "content" && isPdf ? (
+        <div className="flex-1 overflow-hidden">
+          {/* No sandbox here: browsers refuse to run their built-in PDF viewer
+              inside a sandboxed frame. The viewer itself is isolated. */}
+          <iframe
+            key={refreshTick}
+            src={rawUrl}
+            title={fileName}
             className="w-full h-full border-0"
           />
         </div>

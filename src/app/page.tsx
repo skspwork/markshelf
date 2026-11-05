@@ -7,7 +7,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { TimelinePanel } from "@/components/TimelinePanel";
 import { useRefreshTick } from "@/lib/useRefreshTick";
 import { withBasePath } from "@/lib/basePath";
-import { isHtmlPath } from "@/lib/fileKind";
+import { isMarkdownPath } from "@/lib/fileKind";
 import { Clock } from "lucide-react";
 
 interface TreeEntry {
@@ -112,7 +112,7 @@ export default function Home() {
     function flatten(entries: TreeEntry[]): { path: string; displayName: string }[] {
       const refs: { path: string; displayName: string }[] = [];
       for (const e of entries) {
-        if (e.type === "file" && !isHtmlPath(e.path)) {
+        if (e.type === "file" && isMarkdownPath(e.path)) {
           refs.push({ path: e.path, displayName: e.displayName });
         }
         if (e.type === "folder") {

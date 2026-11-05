@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { MD_EXT, HTML_EXT, isHtmlPath } from "./fileKind";
+import { MD_EXT, HTML_EXT, PDF_EXT, isMarkdownPath } from "./fileKind";
 
 function resolveDocsRoot(): string {
   if (process.env.MARKSHELF_ROOT) return process.env.MARKSHELF_ROOT;
@@ -89,12 +89,14 @@ export function buildTree(dirPath: string = DOCS_ROOT, relativeTo: string = DOCS
         children,
         hasReadme,
       });
-    } else if (MD_EXT.test(item) || HTML_EXT.test(item)) {
+    } else if (MD_EXT.test(item) || HTML_EXT.test(item) || PDF_EXT.test(item)) {
       // Skip README.md as standalone entry (it's attached to the folder)
       if (item.toLowerCase() === "readme.md") continue;
       entries.push({
         name: item,
-        displayName: stripOrderPrefix(item).replace(MD_EXT, "").replace(HTML_EXT, ""),
+        // Only Markdown drops its extension; other formats keep it so the
+        // file type is visible in the tree (e.g. "構成.md" and "構成.pdf").
+        displayName: stripOrderPrefix(item).replace(MD_EXT, ""),
         path: relPath,
         type: "file",
       });
@@ -145,8 +147,8 @@ export interface FileRef {
 export function flattenTree(entries: TreeEntry[]): FileRef[] {
   const refs: FileRef[] = [];
   for (const e of entries) {
-    // HTML files are preview-only: keep them out of the link graph and search.
-    if (e.type === "file" && !isHtmlPath(e.path)) {
+    // HTML / PDF files are preview-only: keep them out of the link graph and search.
+    if (e.type === "file" && isMarkdownPath(e.path)) {
       refs.push({ path: e.path, displayName: e.displayName });
     }
     if (e.type === "folder") {
