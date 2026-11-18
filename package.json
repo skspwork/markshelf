@@ -45,32 +45,32 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@tailwindcss/typography": "^0.5.19",
-    "cytoscape": "^3.33.2",
+    "@tailwindcss/typography": "^0.5.20",
+    "cytoscape": "^3.35.0",
     "cytoscape-fcose": "^2.2.0",
-    "lucide-react": "^1.8.0",
-    "mermaid": "^11.14.0",
-    "next": "16.4.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "lucide-react": "^1.75.0",
+    "mermaid": "^12.3.0",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "simple-git": "^4.0.2"
+    "simple-git": "^4.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@next/eslint-plugin-next": "^16.2.4",
-    "@tailwindcss/postcss": "^4",
+    "@next/eslint-plugin-next": "^16.4.6",
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/cytoscape": "^3.21.9",
     "@types/node": "^22.20.5",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^10.12.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^10.15.0",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "globals": "^16.5.0",
-    "tailwindcss": "^4",
-    "typescript": "^5",
-    "typescript-eslint": "^8.62.0",
-    "vitest": "^5.0.3"
+    "globals": "^17.14.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.1"
   }
 }
