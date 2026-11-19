@@ -243,8 +243,9 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
         content !== null ? (
           <div className="flex-1 flex overflow-hidden">
             <div className="flex-1 overflow-y-auto" ref={scrollRef}>
-              <div className="p-4">
+              <div className="px-6 py-8 md:px-10">
                 <Markdown
+                  variant="reader"
                   enableHeadingLinks
                   onHeadingsExtracted={setHeadings}
                   fileRefs={fileRefs}

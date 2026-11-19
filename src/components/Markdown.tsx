@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import ReactMarkdown, { Components } from "react-markdown";
+import { isValidElement, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown, { type Components, type Options } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Link2, Check } from "lucide-react";
+import rehypeHighlight from "rehype-highlight";
+import {
+  Link2,
+  Check,
+  Copy,
+  Info,
+  Lightbulb,
+  MessageSquareWarning,
+  TriangleAlert,
+  OctagonAlert,
+} from "lucide-react";
+import { remarkAlerts, type AlertType } from "@/lib/remarkAlerts";
 import type { HeadingInfo } from "./TableOfContents";
 import { MermaidBlock } from "./MermaidBlock";
 import { withBasePath } from "@/lib/basePath";
@@ -24,7 +35,27 @@ interface Props {
   onPreviewHide?: () => void;
   /** Show a per-heading anchor link that copies a shareable URL (main content only). */
   enableHeadingLinks?: boolean;
+  /**
+   * "reader": roomy, centered layout for the main content pane.
+   * "compact": dense layout for hover previews.
+   */
+  variant?: "reader" | "compact";
 }
+
+const REMARK_PLUGINS: Options["remarkPlugins"] = [remarkGfm, remarkAlerts];
+// Only fenced blocks with an explicit language are highlighted; mermaid stays
+// plain text so <MermaidBlock> receives the raw source.
+const REHYPE_PLUGINS: Options["rehypePlugins"] = [
+  [rehypeHighlight, { detect: false, plainText: ["mermaid"] }],
+];
+
+const ALERTS: Record<AlertType, { label: string; Icon: typeof Info }> = {
+  note: { label: "Note", Icon: Info },
+  tip: { label: "Tip", Icon: Lightbulb },
+  important: { label: "Important", Icon: MessageSquareWarning },
+  warning: { label: "Warning", Icon: TriangleAlert },
+  caution: { label: "Caution", Icon: OctagonAlert },
+};
 
 /** Copy text via a temporary textarea + execCommand (works without a secure context). */
 function legacyCopy(text: string): boolean {
@@ -53,44 +84,93 @@ function legacyCopy(text: string): boolean {
  * clipboard so it can be sent to someone else and opened scrolled to that spot.
  */
 function HeadingAnchor({ id }: { id: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopied();
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     url.hash = id;
     const full = url.toString();
     window.history.replaceState(null, "", full);
-    const done = () => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    };
-    // navigator.clipboard is only available in secure contexts (HTTPS or
-    // localhost). When served over plain HTTP from another host it is
-    // undefined, so fall back to the legacy execCommand approach.
-    if (window.isSecureContext && navigator.clipboard?.writeText) {
-      navigator.clipboard
-        .writeText(full)
-        .then(done)
-        .catch(() => {
-          if (legacyCopy(full)) done();
-        });
-    } else if (legacyCopy(full)) {
-      done();
-    }
+    copy(full);
   };
 
   return (
     <a
       href={`#${id}`}
       onClick={handleClick}
-      className="ml-2 inline-flex items-center align-middle text-[var(--text-muted)] no-underline opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-[var(--brand-primary)] transition-opacity"
+      className="md-heading-anchor"
       title={copied ? "リンクをコピーしました" : "このヘッダーへのリンクをコピー"}
       aria-label="このヘッダーへのリンクをコピー"
     >
-      {copied ? <Check size={13} /> : <Link2 size={13} />}
+      {copied ? <Check size={14} /> : <Link2 size={14} />}
     </a>
+  );
+}
+
+/** Copy to the clipboard, falling back to execCommand outside secure contexts. */
+async function copyText(text: string): Promise<boolean> {
+  // navigator.clipboard is only available in secure contexts (HTTPS or
+  // localhost). When served over plain HTTP from another host it is
+  // undefined, so fall back to the legacy execCommand approach.
+  if (window.isSecureContext && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return legacyCopy(text);
+    }
+  }
+  return legacyCopy(text);
+}
+
+/** Copy text and show a check mark for a moment afterwards. */
+function useCopied(): [boolean, (text: string) => void] {
+  const [copied, setCopied] = useState(false);
+  const copy = (text: string) => {
+    void copyText(text).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return [copied, copy];
+}
+
+/** Fenced code block with a language label and a copy button. */
+function CodeBlock({ language, children }: { language: string | null; children: React.ReactNode }) {
+  const preRef = useRef<HTMLPreElement>(null);
+  const [copied, copy] = useCopied();
+  return (
+    <div className="md-code">
+      <div className="md-code-bar">
+        <span className="md-code-lang">{language ?? ""}</span>
+        <button
+          type="button"
+          className="md-code-copy"
+          onClick={() => copy(preRef.current?.textContent ?? "")}
+          title={copied ? "コピーしました" : "コードをコピー"}
+          aria-label="コードをコピー"
+        >
+          {copied ? <Check size={13} /> : <Copy size={13} />}
+        </button>
+      </div>
+      <pre ref={preRef}>{children}</pre>
+    </div>
+  );
+}
+
+/** GitHub-style alert box (`> [!NOTE]` etc., see remarkAlerts). */
+function Alert({ type, children }: { type: AlertType; children: React.ReactNode }) {
+  const { label, Icon } = ALERTS[type];
+  return (
+    <div className={`md-alert md-alert-${type}`} role="note">
+      <p className="md-alert-title">
+        <Icon size={15} aria-hidden />
+        {label}
+      </p>
+      {children}
+    </div>
   );
 }
 
@@ -103,6 +183,7 @@ export function Markdown({
   onPreviewShow,
   onPreviewHide,
   enableHeadingLinks = false,
+  variant = "compact",
 }: Props) {
   // Parse headings deterministically from the markdown source
   const headings = useMemo(() => parseHeadings(children), [children]);
@@ -230,10 +311,10 @@ export function Markdown({
           : extractText(headingChildren);
       const id = getIdForHeading(text);
 
-      // `scroll-mt-4` keeps the heading clear of the container's top edge when
+      // `scroll-mt-6` keeps the heading clear of the container's top edge when
       // scrolled to via a shared hash link; `group` drives the anchor's hover.
       const mergedClassName = enableHeadingLinks
-        ? `group scroll-mt-4${className ? ` ${className}` : ""}`
+        ? `group scroll-mt-6${className ? ` ${className}` : ""}`
         : className;
       const hProps = { ...props, id, className: mergedClassName };
       const inner = (
@@ -268,16 +349,28 @@ export function Markdown({
     // Wrap pre to avoid nesting issues with mermaid blocks
     pre: ({ children }) => {
       // If the child is a MermaidBlock (rendered from code), don't wrap in <pre>
-      if (
-        children &&
-        typeof children === "object" &&
-        "type" in children &&
-        (children as React.ReactElement).type === MermaidBlock
-      ) {
+      if (isValidElement(children) && children.type === MermaidBlock) {
         return <>{children}</>;
       }
-      return <pre>{children}</pre>;
+      const codeClass = isValidElement<{ className?: string }>(children)
+        ? (children.props.className ?? "")
+        : "";
+      const language = /language-([\w+#-]+)/.exec(codeClass)?.[1] ?? null;
+      return <CodeBlock language={language}>{children}</CodeBlock>;
     },
+    blockquote: ({ children, node }) => {
+      const type = node?.properties?.dataAlert;
+      if (typeof type === "string" && type in ALERTS) {
+        return <Alert type={type as AlertType}>{children}</Alert>;
+      }
+      return <blockquote>{children}</blockquote>;
+    },
+    // Wide tables scroll horizontally instead of overflowing the pane.
+    table: ({ children }) => (
+      <div className="md-table-wrap">
+        <table>{children}</table>
+      </div>
+    ),
     // Resolve relative markdown links to docs paths so they navigate in-app.
     a: ({ href, children: linkChildren, ...rest }) => {
       const targetPath = href ? resolveRelativeLink(href) : null;
@@ -318,27 +411,12 @@ export function Markdown({
   };
 
   return (
-    <div
-      className="prose prose-sm max-w-none
-      prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[var(--text-primary)]
-      prose-h1:text-lg prose-h1:leading-snug prose-h1:mb-4
-      prose-h2:text-[15px] prose-h2:leading-snug prose-h2:border-b prose-h2:border-[var(--border-default)] prose-h2:pb-2 prose-h2:mt-8 prose-h2:mb-3
-      prose-h3:text-[13px] prose-h3:leading-snug prose-h3:mt-6 prose-h3:mb-2
-      prose-p:text-[var(--text-secondary)] prose-p:text-[13px] prose-p:leading-[1.75]
-      prose-li:text-[var(--text-secondary)] prose-li:text-[13px] prose-li:leading-[1.75]
-      prose-strong:text-[var(--text-primary)] prose-strong:font-semibold
-      prose-a:text-[var(--brand-primary)] prose-a:font-medium prose-a:no-underline hover:prose-a:underline
-      prose-code:text-xs prose-code:text-[var(--text-primary)] prose-code:bg-[var(--bg-muted)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
-      prose-pre:bg-[var(--bg-muted)] prose-pre:text-xs prose-pre:text-[var(--text-primary)]
-      prose-table:text-[12px]
-      prose-th:bg-[var(--bg-muted)] prose-th:text-[var(--text-primary)] prose-th:font-semibold prose-th:px-3 prose-th:py-1.5 prose-th:text-left
-      prose-td:px-3 prose-td:py-1.5 prose-td:border-[var(--border-default)] prose-td:text-[var(--text-secondary)]
-      prose-hr:border-[var(--border-default)]
-      prose-blockquote:border-l-[var(--brand-primary)] prose-blockquote:text-[var(--text-muted)] prose-blockquote:not-italic
-      prose-img:rounded-lg
-    "
-    >
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+    <div className={`md-body md-${variant}`}>
+      <ReactMarkdown
+        remarkPlugins={REMARK_PLUGINS}
+        rehypePlugins={REHYPE_PLUGINS}
+        components={components}
+      >
         {children}
       </ReactMarkdown>
     </div>
