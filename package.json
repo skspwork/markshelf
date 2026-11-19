@@ -1,6 +1,6 @@
 {
   "name": "markshelf",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Structured markdown viewer for git repositories",
   "license": "MIT",
   "author": "sksp.work",
