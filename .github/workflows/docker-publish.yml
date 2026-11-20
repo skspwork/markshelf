@@ -13,6 +13,13 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # QEMU 上の arm64 ビルドがまれにハングするため、デフォルト(6h)より短く打ち切る
+    timeout-minutes: 30
+    # タグ push 時は同一コミットで master 用とタグ用の2本が走る。直列化して
+    # 2本目を gha キャッシュから組み立てさせ、同時ビルドの競合を避ける
+    concurrency:
+      group: docker-publish-${{ github.sha }}
+      cancel-in-progress: false
     permissions:
       contents: read
       packages: write
