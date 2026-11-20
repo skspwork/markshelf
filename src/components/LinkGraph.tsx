@@ -239,7 +239,7 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
                   label: "data(label)",
                   "text-valign": "bottom",
                   "text-halign": "center",
-                  "font-size": "11px",
+                  "font-size": "12px",
                   "font-family": "var(--font-sans)",
                   color: "#4a5060",
                   "text-margin-y": 6,
@@ -423,14 +423,14 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
   return (
     <div className="h-full flex flex-col relative">
       <div className="flex items-center gap-1.5 px-3 py-2 shrink-0">
-        <span className="text-[11px] text-[var(--text-muted)] mr-1">表示範囲</span>
+        <span className="text-[12px] text-[var(--text-muted)] mr-1">表示範囲</span>
         {DEPTH_OPTIONS.map((opt) => {
           const active = depth === opt.value;
           return (
             <button
               key={opt.label}
               onClick={() => changeDepth(opt.value)}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded-md text-[12px] font-medium transition-colors ${
                 active
                   ? "bg-[var(--brand-primary)] text-white"
                   : "text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-secondary)]"
@@ -443,7 +443,7 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
         <div className="ml-auto relative" ref={filterPopoverRef}>
           <button
             onClick={() => setShowFilter((v) => !v)}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium transition-colors ${
               excluded.length > 0
                 ? "bg-[var(--brand-primary)] text-white"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-secondary)]"
@@ -457,7 +457,7 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
           {showFilter && (
             <div className="absolute right-0 top-full mt-1 w-56 max-h-72 overflow-y-auto bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-md shadow-lg z-20 py-1">
               {folders.length === 0 ? (
-                <div className="px-3 py-2 text-[11px] text-[var(--text-muted)]">
+                <div className="px-3 py-2 text-[12px] text-[var(--text-muted)]">
                   フォルダがありません
                 </div>
               ) : (
@@ -466,7 +466,7 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
                   return (
                     <label
                       key={f.path}
-                      className="flex items-center gap-2 px-3 py-1 text-[12px] cursor-pointer hover:bg-[var(--bg-muted)]"
+                      className="flex items-center gap-2 px-3 py-1 text-[14px] cursor-pointer hover:bg-[var(--bg-muted)]"
                       style={{ paddingLeft: `${12 + f.depth * 12}px` }}
                     >
                       <input
@@ -485,7 +485,7 @@ export function LinkGraph({ currentPath, folders, onNavigate, onPreviewShow, onP
         </div>
       </div>
       {(loading || empty) && (
-        <div className="absolute inset-0 flex items-center justify-center text-[13px] text-[var(--text-muted)] z-10 bg-[var(--bg-surface)]">
+        <div className="absolute inset-0 flex items-center justify-center text-[14px] text-[var(--text-muted)] z-10 bg-[var(--bg-surface)]">
           {loading ? "グラフを構築中..." : "このドキュメントへのリンクはありません"}
         </div>
       )}

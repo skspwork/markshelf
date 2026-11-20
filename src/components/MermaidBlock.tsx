@@ -54,7 +54,7 @@ export function MermaidBlock({ code }: { code: string }) {
 
   if (error) {
     return (
-      <div className="border border-red-200 bg-red-50 rounded p-3 text-xs text-red-700">
+      <div className="border border-red-200 bg-red-50 rounded p-3 text-[12px] text-red-700">
         <div className="font-medium mb-1">Mermaid エラー</div>
         <pre className="whitespace-pre-wrap">{code}</pre>
       </div>
@@ -63,7 +63,7 @@ export function MermaidBlock({ code }: { code: string }) {
 
   if (!svg) {
     return (
-      <div className="text-xs text-[var(--text-muted)] py-2">図を描画中...</div>
+      <div className="text-[12px] text-[var(--text-muted)] py-2">図を描画中...</div>
     );
   }
 

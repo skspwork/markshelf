@@ -126,7 +126,7 @@ export function PreviewPopup({ path, position, onNavigate, onMouseEnter, onMouse
         <div className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--border-default)] px-3 py-2 flex items-center gap-2">
           <button
             onClick={() => onNavigate(path)}
-            className="text-xs font-medium text-[var(--brand-primary)] hover:underline truncate flex items-center gap-1"
+            className="text-[14px] font-medium text-[var(--brand-primary)] hover:underline truncate flex items-center gap-1"
           >
             {displayName}
             <ExternalLink size={10} />
@@ -134,9 +134,9 @@ export function PreviewPopup({ path, position, onNavigate, onMouseEnter, onMouse
         </div>
         <div className="p-3">
           {loading ? (
-            <div className="text-xs text-[var(--text-muted)]">読み込み中...</div>
+            <div className="text-[12px] text-[var(--text-muted)]">読み込み中...</div>
           ) : content ? (
-            <div className="text-[11px]">
+            <div className="text-[14px]">
               <Markdown
                 fileRefs={fileRefs}
                 currentPath={path}
@@ -146,7 +146,7 @@ export function PreviewPopup({ path, position, onNavigate, onMouseEnter, onMouse
               >{content}</Markdown>
             </div>
           ) : (
-            <div className="text-xs text-[var(--text-muted)]">プレビューを表示できません</div>
+            <div className="text-[12px] text-[var(--text-muted)]">プレビューを表示できません</div>
           )}
         </div>
       </div>

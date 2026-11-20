@@ -60,14 +60,14 @@ export function TableOfContents({ headings, scrollContainer }: Props) {
 
   return (
     <nav className="py-3 px-2 space-y-px">
-      <div className="text-[10px] font-medium text-[var(--text-muted)] tracking-wider uppercase px-1.5 mb-1.5">
+      <div className="text-[12px] font-medium text-[var(--text-muted)] tracking-wider uppercase px-1.5 mb-1.5">
         目次
       </div>
       {headings.map((h) => (
         <button
           key={h.id}
           onClick={() => handleClick(h.id)}
-          className={`block w-full text-left text-[11px] leading-relaxed py-0.5 truncate transition-colors rounded px-1.5 ${
+          className={`block w-full text-left text-[14px] leading-relaxed py-0.5 truncate transition-colors rounded px-1.5 ${
             activeId === h.id
               ? "text-[var(--brand-primary)] font-medium bg-blue-50"
               : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"

@@ -175,14 +175,14 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
               <ArrowRight size={14} />
             </button>
           )}
-          <h2 className="font-semibold text-[14px] leading-snug truncate text-[var(--text-primary)]">
+          <h2 className="font-semibold text-[16px] leading-snug truncate text-[var(--text-primary)]">
             {fileName}
           </h2>
         </div>
         <div className="flex gap-1">
           <button
             onClick={() => setTab("content")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[14px] font-medium transition-colors ${
               tab === "content"
                 ? "bg-[var(--brand-primary)] text-white"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-secondary)]"
@@ -193,7 +193,7 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
           </button>
           <button
             onClick={() => setTab("history")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[14px] font-medium transition-colors ${
               tab === "history"
                 ? "bg-[var(--brand-primary)] text-white"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-secondary)]"
@@ -204,7 +204,7 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
           </button>
           <button
             onClick={() => setTab("links")}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[14px] font-medium transition-colors ${
               tab === "links"
                 ? "bg-[var(--brand-primary)] text-white"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-secondary)]"
@@ -277,7 +277,7 @@ export function DetailPanel({ filePath, fileRefs, folders, onNavigate, onGoBack,
             )}
           </div>
         ) : (
-          <div className="flex-1 p-4 text-[var(--text-muted)] text-sm">読み込み中...</div>
+          <div className="flex-1 p-4 text-[var(--text-muted)] text-[14px]">読み込み中...</div>
         )
       ) : tab === "history" ? (
         <div className="flex-1 overflow-y-auto" ref={scrollRef}>

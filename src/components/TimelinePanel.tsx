@@ -87,10 +87,10 @@ export function TimelinePanel({ onNavigate, onClose }: Props) {
       >
         <div className="flex items-center gap-2 px-5 py-3 border-b border-[var(--border-default)] shrink-0">
           <Clock size={14} className="text-[var(--brand-primary)]" />
-          <h2 className="font-semibold text-[14px] text-[var(--text-primary)]">
+          <h2 className="font-semibold text-[16px] text-[var(--text-primary)]">
             変更タイムライン
           </h2>
-          <span className="text-[11px] text-[var(--text-muted)]">
+          <span className="text-[12px] text-[var(--text-muted)]">
             リポジトリ全体の変更履歴
           </span>
           <button
@@ -104,18 +104,18 @@ export function TimelinePanel({ onNavigate, onClose }: Props) {
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="h-full flex items-center justify-center text-[13px] text-[var(--text-muted)]">
+            <div className="h-full flex items-center justify-center text-[14px] text-[var(--text-muted)]">
               タイムラインを読み込み中...
             </div>
           ) : entries.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-[13px] text-[var(--text-muted)]">
+            <div className="h-full flex items-center justify-center text-[14px] text-[var(--text-muted)]">
               変更履歴がありません
             </div>
           ) : (
             Array.from(grouped.entries()).map(([dateKey, dateEntries]) => (
         <div key={dateKey}>
           <div className="sticky top-0 z-10 bg-[var(--bg-base)] border-b border-[var(--border-default)] px-4 py-1.5">
-            <span className="text-[11px] font-medium text-[var(--text-muted)] tracking-wide">
+            <span className="text-[12px] font-medium text-[var(--text-muted)] tracking-wide">
               {dateKey}
             </span>
           </div>
@@ -132,23 +132,23 @@ export function TimelinePanel({ onNavigate, onClose }: Props) {
                     <GitCommit size={13} className="text-[var(--text-muted)] mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-[var(--font-mono)] text-[var(--brand-primary)] leading-none">
+                        <span className="text-[12px] font-[var(--font-mono)] text-[var(--brand-primary)] leading-none">
                           {entry.hashShort}
                         </span>
-                        <span className="text-[11px] text-[var(--text-muted)] leading-none">
+                        <span className="text-[12px] text-[var(--text-muted)] leading-none">
                           {formatTime(entry.date)}
                         </span>
                         {entry.author && (
-                          <span className="text-[11px] text-[var(--text-muted)] leading-none">
+                          <span className="text-[12px] text-[var(--text-muted)] leading-none">
                             {entry.author}
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] text-[var(--text-secondary)] mt-1 leading-snug line-clamp-2">
+                      <p className="text-[14px] text-[var(--text-secondary)] mt-1 leading-snug line-clamp-2">
                         {entry.message}
                       </p>
                       <div className="flex items-center gap-1 mt-1.5">
-                        <span className="text-[10px] text-[var(--text-muted)]">
+                        <span className="text-[12px] text-[var(--text-muted)]">
                           {entry.files.length}件のドキュメント変更
                         </span>
                       </div>
@@ -192,12 +192,12 @@ export function TimelinePanel({ onNavigate, onClose }: Props) {
                               />
                               <button
                                 onClick={() => onNavigate(file)}
-                                className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--brand-primary)] truncate text-left"
+                                className="text-[12px] text-[var(--text-secondary)] hover:text-[var(--brand-primary)] truncate text-left"
                                 title={file}
                               >
                                 {displayName}
                               </button>
-                              <span className="text-[10px] text-[var(--text-muted)] truncate ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-[12px] text-[var(--text-muted)] truncate ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                                 {file}
                               </span>
                             </div>

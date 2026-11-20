@@ -20,11 +20,11 @@ export function DiffView({ filePath, hash }: Props) {
   }, [filePath, hash]);
 
   if (diff === null) {
-    return <div className="text-[12px] text-[var(--text-muted)] py-2">差分を読み込み中...</div>;
+    return <div className="text-[14px] text-[var(--text-muted)] py-2">差分を読み込み中...</div>;
   }
 
   return (
-    <pre className="text-[11px] font-[var(--font-mono)] bg-[var(--bg-muted)] rounded-lg p-3 overflow-x-auto leading-[1.7] border border-[var(--border-default)]">
+    <pre className="text-[12px] font-[var(--font-mono)] bg-[var(--bg-muted)] rounded-lg p-3 overflow-x-auto leading-[1.7] border border-[var(--border-default)]">
       {diff.split("\n").filter((line) =>
         !line.startsWith("diff --git") &&
         !line.startsWith("index ") &&

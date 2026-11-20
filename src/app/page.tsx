@@ -31,7 +31,7 @@ export default function Home() {
   const [tree, setTree] = useState<TreeEntry[]>([]);
   const [root, setRoot] = useState<string>("");
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [treeWidth, setTreeWidth] = useState(260);
+  const [treeWidth, setTreeWidth] = useState(300);
   const [showTimeline, setShowTimeline] = useState(false);
   const [backStack, setBackStack] = useState<string[]>([]);
   const [forwardStack, setForwardStack] = useState<string[]>([]);
@@ -105,7 +105,7 @@ export default function Home() {
 
   useEffect(() => {
     const saved = localStorage.getItem("markshelf:treeWidth");
-    if (saved) setTreeWidth(Number(saved) || 260);
+    if (saved) setTreeWidth(Number(saved) || 300);
   }, []);
 
   const fileRefs = useMemo(() => {
@@ -163,18 +163,18 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col">
       <header className="h-11 border-b border-[var(--border-default)] bg-[var(--bg-surface)] flex items-center px-5 shrink-0 gap-3">
-        <span className="font-semibold text-[15px] tracking-tight leading-none">
+        <span className="font-semibold text-[16px] tracking-tight leading-none">
           Mark<span className="text-[var(--brand-primary)]">Shelf</span>
         </span>
         {root && (
-          <span className="text-[11px] text-[var(--text-muted)] font-[var(--font-mono)] truncate leading-none">
+          <span className="text-[12px] text-[var(--text-muted)] font-[var(--font-mono)] truncate leading-none">
             {root}
           </span>
         )}
         <div className="ml-auto">
           <button
             onClick={() => setShowTimeline(!showTimeline)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[14px] font-medium transition-colors ${
               showTimeline
                 ? "bg-[var(--brand-primary)] text-white"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-secondary)]"
@@ -218,7 +218,7 @@ export default function Home() {
               canGoForward={canGoForward}
             />
           ) : (
-            <div className="p-6 text-[var(--text-muted)] text-sm flex items-center justify-center h-full">
+            <div className="p-6 text-[var(--text-muted)] text-[14px] flex items-center justify-center h-full">
               ファイルをクリックして内容を表示
             </div>
           )}

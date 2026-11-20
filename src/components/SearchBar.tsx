@@ -97,7 +97,7 @@ export function SearchBar({ onSelect }: Props) {
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { if (results.length > 0) setIsOpen(true); }}
           placeholder="ドキュメントを検索..."
-          className="w-full pl-8 pr-8 py-1.5 text-[12px] leading-normal rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-shadow"
+          className="w-full pl-8 pr-8 py-1.5 text-[14px] leading-normal rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-shadow"
         />
         {query && (
           <button
@@ -112,11 +112,11 @@ export function SearchBar({ onSelect }: Props) {
       {isOpen && (
         <div className="absolute left-4 right-4 top-full mt-1 z-40 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg shadow-lg max-h-80 overflow-y-auto">
           {isSearching ? (
-            <div className="p-3 text-xs text-[var(--text-muted)] text-center">
+            <div className="p-3 text-[12px] text-[var(--text-muted)] text-center">
               検索中...
             </div>
           ) : results.length === 0 ? (
-            <div className="p-3 text-xs text-[var(--text-muted)] text-center">
+            <div className="p-3 text-[12px] text-[var(--text-muted)] text-center">
               該当するドキュメントが見つかりません
             </div>
           ) : (
@@ -126,16 +126,16 @@ export function SearchBar({ onSelect }: Props) {
                 onClick={() => handleSelect(r.path)}
                 className="w-full text-left px-3 py-2 hover:bg-[var(--bg-muted)] border-b border-[var(--border-default)] last:border-b-0 transition-colors"
               >
-                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate leading-snug">
+                <div className="text-[14px] font-medium text-[var(--text-primary)] truncate leading-snug">
                   {r.displayName}
                 </div>
-                <div className="text-[10px] text-[var(--text-muted)] font-[var(--font-mono)] truncate mb-1 leading-normal">
+                <div className="text-[12px] text-[var(--text-muted)] font-[var(--font-mono)] truncate mb-1 leading-normal">
                   {r.path}
                 </div>
                 {r.matches.slice(0, 2).map((m) => (
                   <div
                     key={m.line}
-                    className="text-[10px] text-[var(--text-secondary)] truncate leading-relaxed"
+                    className="text-[12px] text-[var(--text-secondary)] truncate leading-relaxed"
                   >
                     <span className="text-[var(--text-muted)] mr-1">L{m.line}</span>
                     <HighlightMatch text={m.text} query={query} />

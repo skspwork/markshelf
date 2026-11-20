@@ -8,7 +8,7 @@
 - GitHub Flavored Markdown（テーブル・タスクリスト・打ち消し線・脚注）を有効化
 - スタイルは `src/app/markdown.css`（GitHub 風の閲覧テーマ。md-reader を参考）。`variant` で 2 種類を切り替える
   - `reader`（本文表示）: 本文 16px・行間 1.8、最大幅 860px で中央寄せ。h1/h2 に下線
-  - `compact`（プレビューポップアップ、既定）: 本文 12px の詰めた表示。コードのコピーボタンは出さない
+  - `compact`（プレビューポップアップ、既定）: 本文 14px の詰めた表示。コードのコピーボタンは出さない
 - アラート: GitHub と同じ `> [!NOTE]`（TIP / IMPORTANT / WARNING / CAUTION、大文字小文字は区別しない）を `src/lib/remarkAlerts.ts` で検出し、色付きの枠とアイコン付きタイトルで表示。マーカーは行に単独で書いたときだけ有効（`> [!NOTE] 本文` は通常の引用）
 - テーブルは横スクロール可能な枠で囲み、ヘッダー背景・縞模様・ホバー強調を付ける
 - 見出しはカスタムコンポーネントに置き換え、`src/lib/markdown.ts` の `parseHeadings()` で採番した ID を付与（目次のアンカーと一致。[SPEC3.3 TableOfContents](SPEC3.3-TableOfContents.md)）

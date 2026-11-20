@@ -6,7 +6,7 @@
 
 | キー | 保存場所 | 用途 | デフォルト | 関連要件 |
 |------|---------|------|-----------|---------|
-| `markshelf:treeWidth` | `src/app/page.tsx` | 左ツリーパネルの幅 (px) | `260` | [REQ3.4](../../要件定義/REQ3-プレビューとツリー/REQ3.4-パネルリサイザー.md) |
+| `markshelf:treeWidth` | `src/app/page.tsx` | 左ツリーパネルの幅 (px) | `300` | [REQ3.4](../../要件定義/REQ3-プレビューとツリー/REQ3.4-パネルリサイザー.md) |
 | `markshelf:tocWidth` | `src/components/DetailPanel.tsx` | 目次パネルの幅 (px) | `176` | [REQ3.4](../../要件定義/REQ3-プレビューとツリー/REQ3.4-パネルリサイザー.md) |
 | `markshelf:treeExpanded` | `src/components/TreeView.tsx` | ツリーの展開状態（フォルダパスの集合） | トップレベルの README 付きフォルダを展開 | [REQ3.2](../../要件定義/REQ3-プレビューとツリー/REQ3.2-ツリービュー.md) |
 | `markshelf:linkGraphDepth` | `src/components/LinkGraph.tsx` | リンクグラフで辿る深さ（1/2/3/`all`） | `1` | [REQ2.2](../../要件定義/REQ2-リンクグラフ/REQ2.2-階層切替.md) |

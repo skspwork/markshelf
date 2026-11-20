@@ -5,7 +5,7 @@
 ## 設計
 
 - 左ツリーと DetailPanel の間、DetailPanel 内本文と目次の間にドラッグハンドルを置く
-- ツリー幅は `src/app/page.tsx` が `treeWidth` ステートで管理し、`localStorage['markshelf:treeWidth']`（デフォルト 260px）に永続化
+- ツリー幅は `src/app/page.tsx` が `treeWidth` ステートで管理し、`localStorage['markshelf:treeWidth']`（デフォルト 300px）に永続化
 - 目次幅は `src/components/DetailPanel.tsx` が管理し、`localStorage['markshelf:tocWidth']`（デフォルト 176px）に永続化
 - ドラッグ中は `document` の `mousemove`/`mouseup` を監視してリアルタイムに幅を更新、終端で localStorage に書き込む
 - 最小値・最大値でクランプして極端なレイアウト崩れを防ぐ

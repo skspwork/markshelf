@@ -136,7 +136,7 @@ export function TreeView({ entries, selectedPath, onSelect }: Props) {
         />
       ))}
       {entries.length === 0 && (
-        <div className="text-[var(--text-muted)] text-[13px] p-4 text-center">
+        <div className="text-[var(--text-muted)] text-[14px] p-4 text-center">
           マークダウンファイルが見つかりません
         </div>
       )}
@@ -194,7 +194,7 @@ function TreeNode({
         onClick={handleClick}
         className={`
           flex items-center gap-1.5 cursor-pointer select-none
-          h-7 pr-2 text-[12px] leading-none transition-colors
+          h-8 pr-2 text-[14px] leading-none transition-colors
           ${isSelected
             ? "bg-[var(--brand-primary)]/10 text-[var(--text-primary)]"
             : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
