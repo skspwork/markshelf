@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import mermaid from "mermaid";
 import { Maximize2, Minus, Plus, RotateCcw, X } from "lucide-react";
@@ -61,6 +61,10 @@ export function MermaidBlock({ code }: { code: string }) {
     );
   }
 
+  // Mermaid emits width="100%" + style="max-width: Npx"; N is the diagram's
+  // natural width, which the reader layout needs to size the block.
+  const naturalWidth = svg ? Number(/max-width:\s*([\d.]+)px/.exec(svg)?.[1]) || null : null;
+
   if (!svg) {
     return (
       <div className="text-[12px] text-[var(--text-muted)] py-2">図を描画中...</div>
@@ -69,7 +73,10 @@ export function MermaidBlock({ code }: { code: string }) {
 
   return (
     <>
-      <div className="group relative my-2">
+      <div
+        className="md-mermaid group relative my-2"
+        style={naturalWidth ? ({ "--mermaid-w": `${naturalWidth}px` } as CSSProperties) : undefined}
+      >
         <div
           ref={containerRef}
           className="overflow-x-auto cursor-zoom-in"

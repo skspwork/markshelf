@@ -27,10 +27,34 @@
   font-feature-settings: "palt" 0;
 }
 
+/*
+ * Reader layout: prose keeps a ~52 字/行 measure (860px), while wide blocks
+ * (code, tables, Mermaid) may break out up to 1200px when their content
+ * needs it. Narrow wide-blocks still line up with the prose column.
+ */
 .md-reader {
-  max-width: 860px;
-  margin: 0 auto;
+  --md-measure: 860px;
+  --md-wide: 1200px;
   font-size: 16px;
+}
+.md-reader > * {
+  max-width: var(--md-measure);
+  margin-left: auto;
+  margin-right: auto;
+}
+.md-reader > .md-code,
+.md-reader > .md-table-wrap,
+.md-reader > .md-mermaid {
+  width: fit-content;
+  min-width: min(100%, var(--md-measure));
+  max-width: min(100%, var(--md-wide));
+}
+/* Give the diagram its natural width so fit-content above can measure it. */
+.md-reader > .md-mermaid svg {
+  display: block;
+  width: var(--mermaid-w, 100%);
+  max-width: 100% !important;
+  margin: 0 auto;
 }
 
 .md-compact {

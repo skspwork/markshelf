@@ -356,6 +356,9 @@ export function Markdown({
         ? (children.props.className ?? "")
         : "";
       const language = /language-([\w+#-]+)/.exec(codeClass)?.[1] ?? null;
+      // The `code` override above turns mermaid into a MermaidBlock; render it
+      // bare so the diagram is a direct child of .md-body (and can go wide).
+      if (language === "mermaid") return <>{children}</>;
       return <CodeBlock language={language}>{children}</CodeBlock>;
     },
     blockquote: ({ children, node }) => {
