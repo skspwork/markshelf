@@ -1,39 +1,114 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import mermaid from "mermaid";
-import { Maximize2, Minus, Plus, RotateCcw, X } from "lucide-react";
+import { Minus, Plus, RotateCcw, X } from "lucide-react";
 
-let initialized = false;
+// ---- Layout preference ----------------------------------------------------
+// Mermaid 12 changed the default layout engine from dagre to ELK. Users can
+// pick the engine from the zoom modal; the choice is shared by every diagram
+// on the page and persisted in localStorage.
+const LAYOUTS = [
+  { value: "elk", label: "ELK", title: "ELK レイアウト（Mermaid 12 の標準）" },
+  { value: "dagre", label: "dagre", title: "dagre レイアウト（Mermaid 11 以前の標準）" },
+] as const;
+type MermaidLayout = (typeof LAYOUTS)[number]["value"];
+const DEFAULT_LAYOUT: MermaidLayout = "elk";
 
-function ensureInit() {
-  if (initialized) return;
-  initialized = true;
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: "default",
-    securityLevel: "loose",
-    fontFamily: "system-ui, sans-serif",
-  });
+const LAYOUT_KEY = "markshelf:mermaidLayout";
+const layoutListeners = new Set<() => void>();
+let layoutOverride: MermaidLayout | null = null;
+
+function readLayout(): MermaidLayout {
+  try {
+    const saved = localStorage.getItem(LAYOUT_KEY);
+    return LAYOUTS.some((l) => l.value === saved) ? (saved as MermaidLayout) : DEFAULT_LAYOUT;
+  } catch {
+    return DEFAULT_LAYOUT;
+  }
 }
 
-let counter = 0;
+function setLayout(value: MermaidLayout) {
+  try {
+    if (value === DEFAULT_LAYOUT) localStorage.removeItem(LAYOUT_KEY);
+    else localStorage.setItem(LAYOUT_KEY, value);
+  } catch {
+    // storage unavailable: keep the in-memory choice working for this page
+  }
+  layoutOverride = value;
+  layoutListeners.forEach((l) => l());
+}
+
+function subscribeLayout(listener: () => void) {
+  layoutListeners.add(listener);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === LAYOUT_KEY) {
+      layoutOverride = null;
+      listener();
+    }
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    layoutListeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function useMermaidLayout(): MermaidLayout {
+  return useSyncExternalStore(
+    subscribeLayout,
+    () => layoutOverride ?? readLayout(),
+    () => DEFAULT_LAYOUT,
+  );
+}
+
+// ---- Rendering ------------------------------------------------------------
+// mermaid.initialize() is global, so (re)initialize and render inside one
+// serialized queue to keep each diagram's settings from leaking into another.
+let renderQueue: Promise<unknown> = Promise.resolve();
+let renderSeq = 0;
+
+/**
+ * Each render gets a fresh element id: re-rendering (e.g. after switching the
+ * layout) while an SVG with the same id is still in the DOM makes Mermaid
+ * measure the wrong element and emit an empty diagram.
+ */
+function renderDiagram(code: string, layout: MermaidLayout) {
+  const id = `mermaid-${++renderSeq}`;
+  const job = renderQueue.then(() => {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "default",
+      securityLevel: "loose",
+      fontFamily: "system-ui, sans-serif",
+      // A top-level layout would also override swimlane diagrams, which need
+      // their own engine, so pin that one back.
+      ...(layout === DEFAULT_LAYOUT ? {} : { layout, swimlane: { layout: "swimlane" } }),
+    });
+    return mermaid.render(id, code).catch((e) => {
+      // Clean up any error element mermaid might have injected
+      document.getElementById("d" + id)?.remove();
+      throw e;
+    });
+  });
+  renderQueue = job.catch(() => undefined);
+  return job;
+}
 
 export function MermaidBlock({ code }: { code: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const idRef = useRef(`mermaid-${++counter}`);
+  const layout = useMermaidLayout();
 
   useEffect(() => {
     let cancelled = false;
-    ensureInit();
 
     (async () => {
       try {
-        const { svg: rendered } = await mermaid.render(idRef.current, code);
+        const { svg: rendered } = await renderDiagram(code, layout);
         if (!cancelled) {
           setSvg(rendered);
           setError(null);
@@ -43,14 +118,11 @@ export function MermaidBlock({ code }: { code: string }) {
           setError(e instanceof Error ? e.message : "Mermaid render error");
           setSvg(null);
         }
-        // Clean up any error element mermaid might have injected
-        const errEl = document.getElementById("d" + idRef.current);
-        errEl?.remove();
       }
     })();
 
     return () => { cancelled = true; };
-  }, [code]);
+  }, [code, layout]);
 
   if (error) {
     return (
@@ -74,7 +146,7 @@ export function MermaidBlock({ code }: { code: string }) {
   return (
     <>
       <div
-        className="md-mermaid group relative my-2"
+        className="md-mermaid my-2"
         style={naturalWidth ? ({ "--mermaid-w": `${naturalWidth}px` } as CSSProperties) : undefined}
       >
         <div
@@ -84,17 +156,15 @@ export function MermaidBlock({ code }: { code: string }) {
           onClick={() => setExpanded(true)}
           dangerouslySetInnerHTML={{ __html: svg }}
         />
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="absolute top-1 right-1 p-1 rounded bg-[var(--bg-surface)]/90 border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-          title="拡大表示"
-          aria-label="図を拡大表示"
-        >
-          <Maximize2 size={14} />
-        </button>
       </div>
-      {expanded && <MermaidModal svg={svg} onClose={() => setExpanded(false)} />}
+      {expanded && (
+        <MermaidModal
+          svg={svg}
+          layout={layout}
+          onLayoutChange={setLayout}
+          onClose={() => setExpanded(false)}
+        />
+      )}
     </>
   );
 }
@@ -111,7 +181,17 @@ function naturalSize(svgEl: SVGSVGElement): { w: number; h: number } {
   return { w: r.width || 800, h: r.height || 600 };
 }
 
-function MermaidModal({ svg, onClose }: { svg: string; onClose: () => void }) {
+function MermaidModal({
+  svg,
+  layout,
+  onLayoutChange,
+  onClose,
+}: {
+  svg: string;
+  layout: MermaidLayout;
+  onLayoutChange: (layout: MermaidLayout) => void;
+  onClose: () => void;
+}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const sizeRef = useRef<{ w: number; h: number } | null>(null);
@@ -229,6 +309,28 @@ function MermaidModal({ svg, onClose }: { svg: string; onClose: () => void }) {
           <button className={btn} onClick={() => setScale(initialScale)} title="リセット (0)">
             <RotateCcw size={14} />
           </button>
+          <div className="ml-3 flex items-center gap-1" role="radiogroup" aria-label="レイアウト">
+            <span className="text-[12px] text-[var(--text-muted)]">レイアウト</span>
+            <div className="flex rounded border border-[var(--border-default)] overflow-hidden">
+              {LAYOUTS.map((l) => (
+                <button
+                  key={l.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={layout === l.value}
+                  className={`px-2 py-0.5 text-[12px] transition-colors ${
+                    layout === l.value
+                      ? "bg-[var(--bg-muted)] text-[var(--text-secondary)] font-medium"
+                      : "text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-secondary)]"
+                  }`}
+                  onClick={() => onLayoutChange(l.value)}
+                  title={l.title}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <button className={`${btn} ml-auto`} onClick={onClose} title="閉じる (Esc)">
             <X size={16} />
           </button>
